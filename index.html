@@ -1,0 +1,2516 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Armed Detective Agency: Visual Novel Investigation (Danganronpa Style)</title>
+
+    <script src="https://www.lactame.com/lib/ml/6.0.0/ml.min.js"></script>
+
+    <style>
+        /* ===== DANGANRONPA INSPIRED STYLES ===== */
+        @import url('https://fonts.googleapis.com/css2?family=Anton&family=Bebas+Neue&family=Noto+Sans+JP:wght@400;700;900&display=swap');
+
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+
+        body {
+            background: #0a0a0a;
+            font-family: 'Noto Sans JP', 'Bebas Neue', sans-serif;
+            color: #fff;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            overflow: hidden;
+        }
+
+        #vn-container {
+            width: 1100px;
+            max-width: 98vw;
+            max-height: 98vh;
+            aspect-ratio: 16 / 9;
+            position: relative;
+            background: #111;
+            border: 4px solid #ff2a6d;
+            box-shadow:
+                0 0 0 3px #000,
+                0 0 0 6px #ff2a6d,
+                0 0 40px rgba(255, 42, 109, 0.6),
+                inset 0 0 80px rgba(0, 0, 0, 0.9);
+            overflow: hidden;
+            display: flex;
+            flex-direction: column;
+            clip-path: polygon(0 0, 100% 0, 100% 97%, 97% 100%, 0 100%);
+        }
+
+        /* Diagonal scanline overlay */
+        #vn-container::before {
+            content: "";
+            position: absolute;
+            inset: 0;
+            background: repeating-linear-gradient(
+                45deg,
+                transparent,
+                transparent 3px,
+                rgba(255, 42, 109, 0.04) 3px,
+                rgba(255, 42, 109, 0.04) 6px
+            );
+            z-index: 10;
+            pointer-events: none;
+        }
+
+        /* Halftone dots */
+        #vn-container::after {
+            content: "";
+            position: absolute;
+            inset: 0;
+            background-image: radial-gradient(rgba(255,255,255,0.06) 1px, transparent 1px);
+            background-size: 8px 8px;
+            z-index: 9;
+            pointer-events: none;
+            opacity: 0.5;
+        }
+
+        #bg-layer {
+            position: absolute;
+            inset: 0;
+            background-size: cover;
+            background-position: center;
+            transition: filter 0.4s ease, transform 0.4s ease;
+            z-index: 1;
+            filter: brightness(0.6) contrast(1.3) saturate(1.2);
+        }
+
+        #sprite-layer {
+            position: absolute;
+            bottom: 0;
+            left: 50%;
+            transform: translateX(-50%);
+            height: 88%;
+            z-index: 2;
+            pointer-events: none;
+            transition: opacity 0.3s ease-in-out, transform 0.3s ease;
+            filter: drop-shadow(0 0 20px rgba(255, 42, 109, 0.4));
+        }
+
+        #character-sprite {
+            height: 100%;
+            width: auto;
+            object-fit: contain;
+            display: block;
+        }
+
+        /* ===== TOP BAR ===== */
+        .top-bar {
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            display: flex;
+            justify-content: space-between;
+            align-items: stretch;
+            z-index: 12;
+            gap: 0;
+            flex-wrap: nowrap;
+            padding: 0;
+        }
+
+        .case-title-badge {
+            background: linear-gradient(135deg, #ff2a6d, #b3004a);
+            color: #fff;
+            padding: 10px 24px 10px 18px;
+            font-family: 'Anton', sans-serif;
+            font-size: 16px;
+            letter-spacing: 2px;
+            text-transform: uppercase;
+            clip-path: polygon(0 0, 100% 0, 92% 100%, 0 100%);
+            box-shadow: 4px 4px 0 #000;
+            transform: rotate(-0.5deg);
+            text-shadow: 2px 2px 0 #000;
+        }
+
+        .stats-badge {
+            background: rgba(0, 0, 0, 0.9);
+            border-top: 3px solid #ff2a6d;
+            border-bottom: 3px solid #ff2a6d;
+            color: #fff;
+            padding: 10px 20px;
+            font-family: 'Bebas Neue', sans-serif;
+            font-size: 15px;
+            letter-spacing: 2px;
+            display: flex;
+            align-items: center;
+            gap: 14px;
+            text-shadow: 1px 1px 0 #000;
+        }
+
+        .stats-badge span {
+            color: #ff2a6d;
+            font-weight: 900;
+            font-size: 18px;
+        }
+
+        #difficulty-display {
+            color: #00e5ff !important;
+            transition: color 0.3s;
+        }
+
+        .menu-btn {
+            background: #ff2a6d;
+            border: 3px solid #000;
+            color: #fff;
+            padding: 10px 22px;
+            font-family: 'Anton', sans-serif;
+            font-size: 14px;
+            letter-spacing: 2px;
+            cursor: pointer;
+            text-transform: uppercase;
+            clip-path: polygon(8% 0, 100% 0, 92% 100%, 0 100%);
+            box-shadow: 4px 4px 0 #000;
+            transition: all 0.15s ease;
+            text-shadow: 1px 1px 0 #000;
+        }
+
+        .menu-btn:hover {
+            background: #fff;
+            color: #ff2a6d;
+            transform: translate(-2px, -2px);
+            box-shadow: 6px 6px 0 #000;
+        }
+
+        /* ===== GAME MENU ===== */
+        #game-menu {
+            position: absolute;
+            inset: 0;
+            z-index: 40;
+            display: none;
+            align-items: center;
+            justify-content: center;
+            padding: 30px;
+            background: rgba(0, 0, 0, 0.92);
+        }
+
+        .game-menu-card {
+            width: min(520px, 100%);
+            padding: 40px;
+            text-align: center;
+            background: #1a1a1a;
+            border: 4px solid #ff2a6d;
+            box-shadow: 12px 12px 0 #000, 0 0 50px rgba(255, 42, 109, 0.5);
+            clip-path: polygon(0 0, 100% 0, 100% 95%, 95% 100%, 0 100%);
+            position: relative;
+        }
+
+        .game-menu-card::before {
+            content: "MENU";
+            position: absolute;
+            top: -18px;
+            left: 50%;
+            transform: translateX(-50%);
+            background: #ff2a6d;
+            color: #fff;
+            font-family: 'Anton', sans-serif;
+            font-size: 14px;
+            letter-spacing: 4px;
+            padding: 4px 20px;
+            border: 2px solid #000;
+        }
+
+        .game-menu-card h2 {
+            margin: 0 0 8px;
+            color: #fff;
+            font-family: 'Anton', sans-serif;
+            letter-spacing: 4px;
+            font-size: 32px;
+            text-shadow: 3px 3px 0 #ff2a6d;
+        }
+
+        .game-menu-card p {
+            color: #ccc;
+            font-size: 14px;
+            line-height: 1.6;
+            font-family: 'Noto Sans JP', sans-serif;
+        }
+
+        .game-menu-actions {
+            display: grid;
+            gap: 10px;
+            margin: 26px 0 20px;
+        }
+
+        .game-menu-actions button {
+            padding: 14px;
+            background: #222;
+            border: 3px solid #444;
+            color: #fff;
+            font-family: 'Anton', sans-serif;
+            letter-spacing: 2px;
+            font-size: 16px;
+            cursor: pointer;
+            text-transform: uppercase;
+            clip-path: polygon(0 0, 100% 0, 97% 100%, 0 100%);
+            transition: all 0.15s ease;
+            text-shadow: 1px 1px 0 #000;
+        }
+
+        .game-menu-actions button:hover {
+            background: #ff2a6d;
+            border-color: #fff;
+            transform: translateX(5px);
+            box-shadow: -4px 4px 0 #000;
+        }
+
+        .menu-help {
+            border-top: 2px dashed #444;
+            padding-top: 15px;
+            margin: 0 !important;
+            color: #888 !important;
+            font-size: 12px !important;
+        }
+
+        /* ===== DIALOGUE BOX ===== */
+        #dialogue-box {
+            position: absolute;
+            bottom: 20px;
+            left: 20px;
+            right: 20px;
+            height: 200px;
+            background: rgba(10, 10, 10, 0.96);
+            border: 4px solid #ff2a6d;
+            padding: 22px 28px;
+            z-index: 12;
+            box-shadow: 0 0 0 3px #000, 8px 8px 0 rgba(255, 42, 109, 0.3);
+            cursor: pointer;
+            clip-path: polygon(0 0, 100% 0, 100% 100%, 2% 100%, 0 88%);
+            transition: transform 0.15s ease;
+        }
+
+        #dialogue-box:hover {
+            transform: scale(1.005);
+        }
+
+        #speaker-name {
+            position: absolute;
+            top: -22px;
+            left: 24px;
+            background: #ff2a6d;
+            color: #fff;
+            font-family: 'Anton', sans-serif;
+            font-size: 18px;
+            padding: 6px 24px;
+            letter-spacing: 3px;
+            text-transform: uppercase;
+            border: 3px solid #000;
+            box-shadow: 4px 4px 0 #000;
+            clip-path: polygon(0 0, 100% 0, 94% 100%, 0 100%);
+            text-shadow: 2px 2px 0 #000;
+            transform: rotate(-1.5deg);
+        }
+
+        #dialogue-text {
+            font-size: 19px;
+            line-height: 1.4;
+            color: #fff;
+            margin-top: 8px;
+            user-select: text;
+            font-family: 'Noto Sans JP', sans-serif;
+            text-shadow: 1px 1px 0 rgba(0,0,0,0.8);
+        }
+
+        #dialogue-translation {
+            display: none;
+            margin-top: 10px;
+            padding-top: 8px;
+            border-top: 2px dashed rgba(255, 42, 109, 0.5);
+            color: #00e5ff;
+            font-family: 'Noto Sans JP', sans-serif;
+            font-size: 14px;
+            line-height: 1.4;
+            user-select: text;
+            text-shadow: 1px 1px 0 rgba(0,0,0,0.8);
+        }
+
+        .click-prompt {
+            position: absolute;
+            bottom: 10px;
+            right: 24px;
+            font-size: 13px;
+            color: #ff2a6d;
+            letter-spacing: 2px;
+            font-family: 'Bebas Neue', sans-serif;
+            animation: blinkDangan 0.8s infinite;
+            text-shadow: 1px 1px 0 #000;
+        }
+
+        @keyframes blinkDangan {
+            0%, 100% { opacity: 0.3; transform: translateX(0); }
+            50% { opacity: 1; transform: translateX(5px); }
+        }
+
+        /* ===== CHOICE OVERLAY ===== */
+        #choice-overlay {
+            position: absolute;
+            inset: 0;
+            background: rgba(0, 0, 0, 0.94);
+            display: none;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            padding: 30px;
+            z-index: 20;
+            overflow-y: auto;
+        }
+
+        #choice-prompt-title {
+            font-family: 'Anton', sans-serif;
+            font-size: 26px;
+            color: #fff;
+            margin-bottom: 8px;
+            text-align: center;
+            letter-spacing: 4px;
+            text-transform: uppercase;
+            text-shadow: 3px 3px 0 #ff2a6d;
+            transform: skewX(-5deg);
+        }
+
+        #choice-question-text {
+            font-size: 17px;
+            line-height: 1.5;
+            color: #fff;
+            text-align: center;
+            max-width: 720px;
+            margin-bottom: 24px;
+            font-family: 'Noto Sans JP', sans-serif;
+            background: rgba(255, 42, 109, 0.15);
+            border-left: 4px solid #ff2a6d;
+            border-right: 4px solid #ff2a6d;
+            padding: 12px 20px;
+        }
+
+        .choice-btn {
+            width: 100%;
+            max-width: 680px;
+            background: #1a1a1a;
+            border: 3px solid #444;
+            color: #fff;
+            padding: 16px 22px;
+            margin: 7px 0;
+            font-family: 'Noto Sans JP', sans-serif;
+            font-size: 16px;
+            text-align: left;
+            cursor: pointer;
+            transition: all 0.15s ease;
+            clip-path: polygon(0 0, 100% 0, 98% 100%, 0 100%);
+            position: relative;
+            text-shadow: 1px 1px 0 #000;
+        }
+
+        .choice-btn::before {
+            content: "▶";
+            color: #ff2a6d;
+            margin-right: 10px;
+            font-size: 12px;
+            opacity: 0;
+            transition: opacity 0.2s;
+        }
+
+        .choice-btn:hover:not(:disabled) {
+            background: #ff2a6d;
+            border-color: #fff;
+            transform: translateX(10px) skewX(-2deg);
+            box-shadow: -6px 6px 0 #000;
+        }
+
+        .choice-btn:hover:not(:disabled)::before {
+            opacity: 1;
+            color: #fff;
+        }
+
+        .choice-btn:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+
+        #hint-btn {
+            display: none;
+            margin-top: 18px;
+            background: #00e5ff;
+            border: 3px solid #000;
+            color: #000;
+            padding: 10px 24px;
+            font-family: 'Anton', sans-serif;
+            font-size: 15px;
+            cursor: pointer;
+            text-transform: uppercase;
+            letter-spacing: 2px;
+            transition: all 0.15s ease;
+            box-shadow: 4px 4px 0 #000;
+            clip-path: polygon(5% 0, 100% 0, 95% 100%, 0 100%);
+        }
+
+        #hint-btn:hover {
+            background: #fff;
+            transform: translate(-2px, -2px);
+            box-shadow: 6px 6px 0 #000;
+        }
+
+        #hint-box {
+            display: none;
+            margin-top: 14px;
+            padding: 16px 22px;
+            background: rgba(0, 229, 255, 0.1);
+            border-left: 5px solid #00e5ff;
+            border-right: 5px solid #00e5ff;
+            color: #fff;
+            font-size: 14px;
+            max-width: 680px;
+            text-align: left;
+            line-height: 1.6;
+            font-family: 'Noto Sans JP', sans-serif;
+        }
+
+        /* ===== FEEDBACK TOAST ===== */
+        #feedback-toast {
+            position: absolute;
+            top: 80px;
+            left: 50%;
+            transform: translateX(-50%) rotate(-2deg);
+            padding: 14px 32px;
+            font-family: 'Anton', sans-serif;
+            font-size: 18px;
+            letter-spacing: 2px;
+            z-index: 25;
+            display: none;
+            box-shadow: 6px 6px 0 #000;
+            max-width: 85%;
+            text-align: center;
+            text-transform: uppercase;
+            clip-path: polygon(3% 0, 100% 0, 97% 100%, 0 100%);
+            text-shadow: 2px 2px 0 #000;
+        }
+
+        #feedback-toast.correct {
+            background: #00c853;
+            border: 3px solid #000;
+            color: #fff;
+        }
+
+        #feedback-toast.incorrect {
+            background: #ff1744;
+            border: 3px solid #000;
+            color: #fff;
+            animation: shake 0.4s;
+        }
+
+        @keyframes shake {
+            0%, 100% { transform: translateX(-50%) rotate(-2deg); }
+            25% { transform: translateX(-52%) rotate(-3deg); }
+            75% { transform: translateX(-48%) rotate(-1deg); }
+        }
+
+        /* ===== TITLE SCREEN ===== */
+        .title-screen {
+            position: absolute;
+            inset: 0;
+            background:
+                radial-gradient(circle at 20% 30%, rgba(255, 42, 109, 0.25), transparent 50%),
+                radial-gradient(circle at 80% 70%, rgba(0, 229, 255, 0.15), transparent 50%),
+                linear-gradient(135deg, #0a0a0a, #1a0a12 60%, #000);
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            padding: 40px;
+            z-index: 30;
+            text-align: center;
+            overflow: hidden;
+        }
+
+        /* Character showcase strip */
+        .title-characters {
+            display: flex;
+            gap: -20px;
+            margin-bottom: 20px;
+            height: 180px;
+            align-items: flex-end;
+            justify-content: center;
+            position: relative;
+        }
+
+        .title-characters img {
+            height: 100%;
+            width: auto;
+            object-fit: contain;
+            filter: drop-shadow(0 0 15px rgba(255, 42, 109, 0.6));
+            transition: transform 0.3s ease, filter 0.3s ease;
+            margin: 0 -25px;
+            position: relative;
+            z-index: 1;
+        }
+
+        .title-characters img:nth-child(1) { transform: rotate(-6deg) translateY(10px); z-index: 1; }
+        .title-characters img:nth-child(2) { transform: rotate(3deg) translateY(-5px) scale(1.15); z-index: 3; }
+        .title-characters img:nth-child(3) { transform: rotate(7deg) translateY(8px); z-index: 2; }
+
+        .title-characters img:hover {
+            transform: scale(1.2) rotate(0deg) translateY(-10px);
+            filter: drop-shadow(0 0 25px rgba(255, 42, 109, 1));
+            z-index: 10;
+        }
+
+        .title-screen h1 {
+            font-family: 'Anton', sans-serif;
+            font-size: 52px;
+            letter-spacing: 6px;
+            color: #fff;
+            margin-bottom: 6px;
+            text-transform: uppercase;
+            text-shadow:
+                4px 4px 0 #ff2a6d,
+                8px 8px 0 #000;
+            transform: skewX(-5deg);
+            line-height: 1;
+        }
+
+        .title-screen h1::after {
+            content: "";
+            display: block;
+            width: 120px;
+            height: 5px;
+            background: #ff2a6d;
+            margin: 12px auto 0;
+            transform: skewX(20deg);
+            box-shadow: 3px 3px 0 #000;
+        }
+
+        .title-screen p {
+            max-width: 640px;
+            color: #ccc;
+            line-height: 1.6;
+            margin-bottom: 20px;
+            font-size: 15px;
+            font-family: 'Noto Sans JP', sans-serif;
+        }
+
+        .ml-note {
+            font-size: 13px;
+            color: #00e5ff;
+            border-top: 2px dashed rgba(0, 229, 255, 0.3);
+            padding-top: 14px;
+            margin-top: -5px;
+            font-family: 'Noto Sans JP', sans-serif;
+        }
+
+        .start-btn {
+            background: #ff2a6d;
+            border: 4px solid #000;
+            color: #fff;
+            padding: 18px 50px;
+            font-family: 'Anton', sans-serif;
+            font-size: 22px;
+            letter-spacing: 4px;
+            cursor: pointer;
+            text-transform: uppercase;
+            transition: all 0.2s ease;
+            box-shadow: 8px 8px 0 #000;
+            clip-path: polygon(5% 0, 100% 0, 95% 100%, 0 100%);
+            text-shadow: 3px 3px 0 #000;
+            transform: skewX(-3deg);
+            margin-top: 10px;
+        }
+
+        .start-btn:hover {
+            background: #fff;
+            color: #ff2a6d;
+            transform: skewX(-3deg) translate(-4px, -4px);
+            box-shadow: 12px 12px 0 #000;
+        }
+
+        .title-menu-btn {
+            margin-top: 14px;
+            background: transparent;
+            border: 3px solid #ff2a6d;
+            color: #ff2a6d;
+            padding: 12px 30px;
+            font-family: 'Anton', sans-serif;
+            font-size: 15px;
+            letter-spacing: 3px;
+            cursor: pointer;
+            text-transform: uppercase;
+            transition: all 0.2s ease;
+            clip-path: polygon(5% 0, 100% 0, 95% 100%, 0 100%);
+        }
+
+        .title-menu-btn:hover {
+            background: #ff2a6d;
+            color: #fff;
+            box-shadow: 5px 5px 0 #000;
+        }
+
+        /* ===== CHAPTER SCREEN ===== */
+        .chapter-screen {
+            position: absolute;
+            inset: 0;
+            z-index: 32;
+            display: none;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            background: #0a0a0a;
+            color: white;
+            text-align: center;
+            padding: 40px;
+            overflow: hidden;
+        }
+
+        .chapter-screen::before {
+            content: "";
+            position: absolute;
+            inset: -50%;
+            background: repeating-linear-gradient(
+                -45deg,
+                transparent,
+                transparent 40px,
+                rgba(255, 42, 109, 0.08) 40px,
+                rgba(255, 42, 109, 0.08) 80px
+            );
+            animation: slideDiagonal 20s linear infinite;
+            z-index: 0;
+        }
+
+        @keyframes slideDiagonal {
+            0% { transform: translate(0, 0); }
+            100% { transform: translate(80px, 80px); }
+        }
+
+        .chapter-label {
+            font-family: 'Bebas Neue', sans-serif;
+            font-size: 22px;
+            letter-spacing: 10px;
+            color: #ff2a6d;
+            margin-bottom: 10px;
+            position: relative;
+            z-index: 1;
+            text-shadow: 2px 2px 0 #000;
+        }
+
+        .chapter-title {
+            font-family: 'Anton', sans-serif;
+            font-size: 80px;
+            font-weight: 900;
+            letter-spacing: 6px;
+            text-transform: uppercase;
+            color: #fff;
+            text-shadow:
+                5px 5px 0 #ff2a6d,
+                10px 10px 0 #000;
+            transform: skewX(-8deg);
+            position: relative;
+            z-index: 1;
+            line-height: 0.95;
+        }
+
+        .chapter-subtitle {
+            margin-top: 24px;
+            font-size: 17px;
+            color: #ccc;
+            max-width: 620px;
+            position: relative;
+            z-index: 1;
+            font-family: 'Noto Sans JP', sans-serif;
+            border-top: 2px solid #ff2a6d;
+            border-bottom: 2px solid #ff2a6d;
+            padding: 10px 0;
+        }
+
+        #chapter-continue-btn {
+            margin-top: 50px;
+            padding: 16px 45px;
+            border: 4px solid #fff;
+            background: #ff2a6d;
+            color: #fff;
+            font-family: 'Anton', sans-serif;
+            font-weight: bold;
+            letter-spacing: 4px;
+            font-size: 18px;
+            cursor: pointer;
+            position: relative;
+            z-index: 1;
+            box-shadow: 8px 8px 0 #000;
+            clip-path: polygon(5% 0, 100% 0, 95% 100%, 0 100%);
+            text-transform: uppercase;
+            transition: all 0.2s ease;
+            text-shadow: 2px 2px 0 #000;
+        }
+
+        #chapter-continue-btn:hover {
+            background: #fff;
+            color: #ff2a6d;
+            transform: translate(-4px, -4px);
+            box-shadow: 12px 12px 0 #000;
+        }
+
+        /* ===== REVIEW SCREEN ===== */
+        #review-screen {
+            position: absolute;
+            inset: 0;
+            background: rgba(0, 0, 0, 0.96);
+            display: none;
+            justify-content: center;
+            align-items: center;
+            padding: 30px;
+            z-index: 31;
+        }
+
+        .review-case {
+            width: 92%;
+            max-width: 900px;
+            max-height: 92%;
+            overflow-y: auto;
+            background: #141414;
+            border: 4px solid #ff2a6d;
+            box-shadow: 12px 12px 0 #000, 0 0 60px rgba(255, 42, 109, 0.4);
+            clip-path: polygon(0 0, 100% 0, 100% 97%, 97% 100%, 0 100%);
+        }
+
+        .review-header {
+            display: flex;
+            justify-content: space-between;
+            padding: 14px 24px;
+            background: #ff2a6d;
+            border-bottom: 3px solid #000;
+            color: #fff;
+            font-family: 'Anton', sans-serif;
+            font-size: 13px;
+            letter-spacing: 3px;
+            text-shadow: 1px 1px 0 #000;
+        }
+
+        .review-content {
+            padding: 30px 38px;
+        }
+
+        .review-label {
+            color: #ff2a6d;
+            font-family: 'Bebas Neue', sans-serif;
+            font-size: 15px;
+            letter-spacing: 5px;
+            margin-bottom: 6px;
+        }
+
+        .review-content h1 {
+            color: #fff;
+            font-family: 'Anton', sans-serif;
+            font-size: 36px;
+            letter-spacing: 4px;
+            margin: 0 0 8px;
+            text-shadow: 3px 3px 0 #ff2a6d;
+        }
+
+        .review-subtitle {
+            color: #aaa;
+            font-size: 14px;
+            margin-bottom: 24px;
+            font-family: 'Noto Sans JP', sans-serif;
+        }
+
+        #review-results {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 8px 15px;
+            margin-bottom: 20px;
+        }
+
+        .review-row {
+            background: #1e1e1e;
+            border: 2px solid #333;
+            padding: 10px 14px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            font-family: 'Bebas Neue', sans-serif;
+            font-size: 14px;
+            letter-spacing: 1px;
+            color: #fff;
+        }
+
+        .review-row.correct { border-left: 6px solid #00c853; }
+        .review-row.incorrect { border-left: 6px solid #ff1744; }
+        .review-row.pending { border-left: 6px solid #777; }
+
+        .review-status.correct { color: #00c853; }
+        .review-status.incorrect { color: #ff1744; }
+        .review-status.pending { color: #777; }
+
+        .review-special {
+            margin-top: 15px;
+            padding: 16px 20px;
+            background: rgba(255, 42, 109, 0.1);
+            border: 2px solid #ff2a6d;
+            font-family: 'Noto Sans JP', sans-serif;
+            font-size: 14px;
+            line-height: 1.7;
+            color: #ccc;
+            clip-path: polygon(0 0, 100% 0, 99% 100%, 0 100%);
+        }
+
+        .review-special strong { color: #ff2a6d; }
+
+        .review-footer {
+            padding: 0 38px 28px;
+            text-align: center;
+        }
+
+        .review-footer .start-btn {
+            font-size: 16px;
+            padding: 14px 34px;
+        }
+
+        /* ===== FINAL SCREEN ===== */
+        .final-screen {
+            position: absolute;
+            inset: 0;
+            background: rgba(0, 0, 0, 0.97);
+            display: none;
+            justify-content: center;
+            align-items: center;
+            padding: 35px;
+            z-index: 30;
+        }
+
+        .final-case {
+            width: 92%;
+            max-width: 950px;
+            background: #141414;
+            border: 4px solid #ff2a6d;
+            box-shadow: 12px 12px 0 #000, 0 0 60px rgba(255, 42, 109, 0.5);
+            overflow: hidden;
+            clip-path: polygon(0 0, 100% 0, 100% 97%, 97% 100%, 0 100%);
+        }
+
+        .final-header {
+            display: flex;
+            justify-content: space-between;
+            padding: 14px 24px;
+            background: #ff2a6d;
+            border-bottom: 3px solid #000;
+            color: #fff;
+            font-family: 'Anton', sans-serif;
+            font-size: 13px;
+            letter-spacing: 3px;
+            text-shadow: 1px 1px 0 #000;
+        }
+
+        .final-content {
+            display: flex;
+            min-height: 400px;
+        }
+
+        .final-character {
+            width: 43%;
+            display: flex;
+            align-items: flex-end;
+            justify-content: center;
+            overflow: hidden;
+            background: linear-gradient(180deg, rgba(255, 42, 109, 0.1), rgba(0, 0, 0, 0.6));
+            position: relative;
+        }
+
+        .final-character::before {
+            content: "";
+            position: absolute;
+            inset: 0;
+            background: repeating-linear-gradient(
+                -45deg,
+                transparent,
+                transparent 20px,
+                rgba(255, 42, 109, 0.1) 20px,
+                rgba(255, 42, 109, 0.1) 40px
+            );
+        }
+
+        .final-character img {
+            width: 100%;
+            height: 100%;
+            max-height: 440px;
+            object-fit: contain;
+            object-position: bottom center;
+            filter: drop-shadow(0 0 25px rgba(255, 42, 109, 0.6));
+            position: relative;
+            z-index: 1;
+        }
+
+        .final-report {
+            width: 57%;
+            padding: 40px;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+        }
+
+        .final-label {
+            color: #ff2a6d;
+            font-family: 'Bebas Neue', sans-serif;
+            font-size: 15px;
+            letter-spacing: 5px;
+            margin: 0 0 8px;
+        }
+
+        .final-report h1 {
+            color: #fff;
+            font-family: 'Anton', sans-serif;
+            font-size: 40px;
+            letter-spacing: 4px;
+            margin: 0 0 10px;
+            text-shadow: 3px 3px 0 #ff2a6d;
+        }
+
+        #final-rank {
+            font-family: 'Anton', sans-serif;
+            font-size: 90px;
+            font-weight: bold;
+            color: #ff2a6d;
+            line-height: 1;
+            margin: 5px 0 15px;
+            text-shadow: 4px 4px 0 #000, 8px 8px 0 rgba(255, 42, 109, 0.3);
+            transform: skewX(-8deg);
+        }
+
+        #end-description {
+            color: #ccc;
+            font-size: 15px;
+            line-height: 1.6;
+            margin: 0 0 15px;
+            font-family: 'Noto Sans JP', sans-serif;
+        }
+
+        .final-stats {
+            padding: 14px 18px;
+            background: rgba(255, 42, 109, 0.1);
+            border-left: 5px solid #ff2a6d;
+            color: #fff;
+            font-family: 'Bebas Neue', sans-serif;
+            font-size: 15px;
+            letter-spacing: 1px;
+            line-height: 1.6;
+        }
+
+        .ranpo-signature {
+            color: #888;
+            font-family: 'Noto Sans JP', sans-serif;
+            font-style: italic;
+            font-size: 13px;
+            margin-top: 15px;
+        }
+
+        .final-case > .start-btn {
+            display: block;
+            margin: 0 auto 28px;
+            font-size: 16px;
+            padding: 14px 34px;
+        }
+
+        /* ===== RESPONSIVE ===== */
+        @media (max-width: 800px) {
+            #review-results { grid-template-columns: 1fr; }
+            .review-content { padding: 22px; }
+            .review-footer { padding: 0 22px 22px; }
+            .final-content { flex-direction: column; min-height: auto; }
+            .final-character { width: 100%; height: 250px; }
+            .final-report { width: 100%; padding: 28px; }
+            .final-report h1 { font-size: 28px; }
+            #final-rank { font-size: 60px; }
+            .chapter-title { font-size: 48px; }
+            .title-screen h1 { font-size: 34px; }
+            .title-characters { height: 120px; }
+            .stats-badge { font-size: 12px; padding: 8px 12px; gap: 8px; }
+            .case-title-badge { font-size: 12px; padding: 8px 14px; }
+            #dialogue-text { font-size: 16px; }
+        }
+    </style>
+</head>
+
+<body>
+
+<div id="vn-container">
+
+    <!-- ===== TITLE SCREEN ===== -->
+    <div id="title-screen" class="title-screen">
+        <div class="title-characters">
+            <img src="atsushi.png" alt="Atsushi" />
+            <img src="dazai.png" alt="Dazai" />
+            <img src="ranpo.png" alt="Ranpo" />
+        </div>
+        <h1>Armed Detective Agency</h1>
+        <p>A high-stakes mystery investigation visual novel. Analyze case files, question witnesses, and test your English skills under pressure.</p>
+        <p class="ml-note">⚙ Adaptive difficulty powered by a real K-Nearest Neighbors classifier (ml.js), trained on response-time and accuracy patterns.</p>
+        <button class="start-btn" onclick="startVisualNovel()">Begin Investigation</button>
+        <button class="title-menu-btn" onclick="openGameMenu()">CASE MENU</button>
+    </div>
+
+    <!-- ===== TOP BAR ===== -->
+    <div class="top-bar">
+        <div class="case-title-badge">CASE FILE: THE YOKOHAMA CIPHER</div>
+        <div class="stats-badge">
+            SCORE: <span id="score-display">0</span>
+            ACCURACY: <span id="acc-display">100%</span>
+            DIFFICULTY: <span id="difficulty-display">MEDIUM</span>
+        </div>
+        <button class="menu-btn" onclick="openGameMenu()">MENU</button>
+    </div>
+
+    <!-- ===== FEEDBACK ===== -->
+    <div id="feedback-toast"></div>
+
+    <!-- ===== GAME MENU ===== -->
+    <div id="game-menu">
+        <div class="game-menu-card">
+            <h2>CASE MENU</h2>
+            <p>The Yokohama Cipher investigation is currently paused.</p>
+            <div class="game-menu-actions">
+                <button id="resume-menu-btn" onclick="closeGameMenu()">RESUME INVESTIGATION</button>
+                <button onclick="restartFromMenu()">RESTART CASE</button>
+                <button onclick="returnToTitle()">RETURN TO TITLE SCREEN</button>
+            </div>
+            <p class="menu-help">Click dialogue or press Space to continue. Choose answers to unlock the next lead. Press Escape to resume.</p>
+        </div>
+    </div>
+
+    <!-- ===== BACKGROUND ===== -->
+    <div id="bg-layer"></div>
+
+    <!-- ===== SPRITE ===== -->
+    <div id="sprite-layer">
+        <img id="character-sprite" src="" alt="" />
+    </div>
+
+    <!-- ===== DIALOGUE ===== -->
+    <div id="dialogue-box" onclick="advanceDialogue()">
+        <div id="speaker-name">DETECTIVE</div>
+        <div id="dialogue-text">Initializing story sequence...</div>
+        <div id="dialogue-translation"></div>
+        <div class="click-prompt">CLICK OR PRESS SPACE ▶</div>
+    </div>
+
+    <!-- ===== QUESTION OVERLAY ===== -->
+    <div id="choice-overlay">
+        <div id="choice-prompt-title">DECISION POINT</div>
+        <div id="choice-question-text"></div>
+        <div id="choice-buttons-container" style="width:100%; display:flex; flex-direction:column; align-items:center;"></div>
+        <button id="hint-btn" onclick="toggleRanpoHint()">🔍 Ultra Deduction Hint</button>
+        <div id="hint-box"></div>
+    </div>
+
+    <!-- ===== CHAPTER SCREEN ===== -->
+    <div id="chapter-screen" class="chapter-screen">
+        <div class="chapter-label" id="chapter-label">CHAPTER I</div>
+        <div class="chapter-title" id="chapter-title">THE GUILD</div>
+        <div class="chapter-subtitle" id="chapter-subtitle"></div>
+        <button id="chapter-continue-btn" onclick="continueChapter()">CONTINUE</button>
+    </div>
+
+    <!-- ===== CASE REVIEW ===== -->
+    <div id="review-screen">
+        <div class="review-case">
+            <div class="review-header">
+                <span>ARMED DETECTIVE AGENCY</span>
+                <span>CASE #001 — REVIEW</span>
+            </div>
+            <div class="review-content">
+                <div class="review-label">INVESTIGATION REPORT</div>
+                <h1 id="review-title">CASE REVIEW</h1>
+                <div class="review-subtitle" id="review-subtitle">All linguistic evidence has been recorded and reviewed.</div>
+                <div id="review-results"></div>
+                <div class="review-special">
+                    <strong>MEURSAULT ESCAPE:</strong>
+                    <span id="meursault-result">0/5</span>
+                    <br />
+                    <strong>FINAL VERIFICATION:</strong>
+                    <span id="final-verification-result">—</span>
+                </div>
+            </div>
+            <div class="review-footer">
+                <button class="start-btn" id="review-continue-btn">Continue Evaluation</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- ===== FINAL SCREEN ===== -->
+    <div id="end-screen" class="final-screen">
+        <div class="final-case">
+            <div class="final-header">
+                <span>ARMED DETECTIVE AGENCY</span>
+                <span>CASE #001 — CLOSED</span>
+            </div>
+            <div class="final-content">
+                <div class="final-character">
+                    <img src="ranpo.png" alt="Ranpo" />
+                </div>
+                <div class="final-report">
+                    <p class="final-label">FINAL EVALUATION</p>
+                    <h1 id="end-title">CASE CLOSED</h1>
+                    <div id="final-rank">S</div>
+                    <p id="end-description">Evaluation complete.</p>
+                    <div class="final-stats" id="final-stats-summary">FINAL SCORE: 0</div>
+                    <p class="ml-note" id="final-difficulty-summary">Final adaptive difficulty: MEDIUM</p>
+                    <p class="ranpo-signature">— Ranpo Edogawa, Greatest Detective</p>
+                </div>
+            </div>
+            <button class="start-btn" onclick="restartGame()">Re-open Case File</button>
+        </div>
+    </div>
+
+</div>
+
+<script>
+
+    const ASSETS = {
+        bgOffice: "https://i.pinimg.com/736x/a4/f5/20/a4f5200a6518873c0e3fa661e3b14145.jpg",
+        bgRainyCity: "https://i.pinimg.com/1200x/a1/8e/d7/a18ed7d8a6618c9d81fda57c011b91cb.jpg",
+        bgVault: "https://i.pinimg.com/1200x/12/fe/f3/12fef3a7032f26a8d69409b8355149b4.jpg",
+        bgAlley: "https://i.pinimg.com/1200x/74/b8/1e/74b81e0716f83c5d45b92708fd9ff6be.jpg",
+        bgGuildOffice: "https://i.pinimg.com/1200x/94/5a/17/945a17f1b1474aafc591a91f51dd2dfc.jpg",
+        bgGuildVault: "https://i.pinimg.com/736x/a0/cd/a9/a0cda936f5f879d53b7d0d490630b751.jpg",
+        bgLibrary: "https://i.pinimg.com/736x/0f/6b/db/0f6bdb31fe6fc3de86a47ce75f7a4e70.jpg",
+        bgArchive: "https://i.pinimg.com/1200x/16/dc/51/16dc51afea7a7f5def47520d77089620.jpg",
+        bgRatsHideout: "https://i.pinimg.com/736x/95/3d/fe/953dfe5c95d8741cd4d5947531dccfaf.jpg",
+        bgPrisonCorridor: "https://i.pinimg.com/1200x/12/fe/f3/12fef3a7032f26a8d69409b8355149b4.jpg",
+        bgPrisonCell: "https://static.wikia.nocookie.net/bungostraydogs/images/4/46/Meursault.png/revision/latest/scale-to-width-down/1000?cb=20230224071606",
+        bgPrisonControl: "https://i.pinimg.com/1200x/fd/4a/a0/fd4aa02d6f6024e579ff73a4880b673f.jpg",
+        bgEvidenceRoom: "https://i.pinimg.com/1200x/f5/a1/57/f5a157760df3a4aad5def3f5834c8eea.jpg",
+        bgConspiracyBoard: "https://i.pinimg.com/1200x/35/09/32/350932d5b5f22d6c05b34a1bc68e11af.jpg",
+
+        kunikida: "kunikida.png",
+        dazai: "dazai.png",
+        dazai_mersault: "dazaimersault.png",
+        atsushi: "atsushi.png",
+        lucy: "lucy.png",
+        ranpo: "ranpo.png",
+        fukuchi: "fukuchi.png",
+        sigma: "sigma.png",
+        sigma_mersault: "sigmamersault.png",
+        bram: "bram.png",
+        nikolai: "nikolai.png",
+        nikolai_mersault: "nikolaimersault.png",
+        fyodor: "fyodor.png",
+        fyodor_mersault: "fyodormersault.png",
+        poe: "poe.png",
+        francis: "francis.png"
+    };
+
+    /* =========================================================
+       RANPO HINTS — CON TRADUCCIÓN AL ESPAÑOL
+    ========================================================= */
+    const ranpoHints = {
+        verbToBe: {
+            en: "Ranpo's Deduction: Remember! When using 'neither... nor...', the verb always agrees with the subject closest to it.",
+            es: "Deducción de Ranpo: ¡Recuerda! Con 'neither... nor...', el verbo siempre concuerda con el sujeto más cercano."
+        },
+        comparatives: {
+            en: "Ranpo's Deduction: Don't fall for double comparative traps! Never combine 'more' with '-er'. Watch for 'the [more]..., the [clearer]...' patterns.",
+            es: "Deducción de Ranpo: ¡No caigas en trampas de doble comparativo! Nunca combines 'more' con '-er'. Observa patrones como 'the more..., the clearer...'."
+        },
+        pastSimple: {
+            en: "Ranpo's Deduction: Keep it simple! We need a single, completed action in the past, not a complex past continuous or perfect structure.",
+            es: "Deducción de Ranpo: ¡Mantenlo simple! Necesitamos una acción única y completada en el pasado, no una estructura compleja de pasado continuo o perfecto."
+        },
+        pastContinuous: {
+            en: "Ranpo's Deduction: Pay attention to compound subjects! Two people performing an ongoing past action require a plural verb ('were + -ing').",
+            es: "Deducción de Ranpo: ¡Presta atención a los sujetos compuestos! Dos personas realizando una acción pasada en curso requieren un verbo plural ('were + -ing')."
+        },
+        modals: {
+            en: "Ranpo's Deduction: Deductions about past events require 'Modal + HAVE + Past Participle'. Never use 'has' or 'had' after a modal verb!",
+            es: "Deducción de Ranpo: Las deducciones sobre eventos pasados requieren 'Modal + HAVE + Participio Pasado'. ¡Nunca uses 'has' o 'had' después de un verbo modal!"
+        },
+
+        poeRanpo: {
+            en: "Ranpo's Deduction: In complex conditional structures, pay attention to the relationship between the hypothetical condition and its result. Poe's evidence must also agree with the timeline.",
+            es: "Deducción de Ranpo: En estructuras condicionales complejas, presta atención a la relación entre la condición hipotética y su resultado. La evidencia de Poe también debe concordar con la línea temporal."
+        },
+        atsushiLucy: {
+            en: "Ranpo's Deduction: Relative clauses describe people or things, while reported speech changes the tense and word order of the original statement.",
+            es: "Deducción de Ranpo: Las cláusulas relativas describen personas o cosas, mientras que el estilo indirecto cambia el tiempo verbal y el orden de las palabras del enunciado original."
+        },
+
+        chapter3Guild: {
+            en: "Ranpo's Deduction: Look at what the evidence actually proves, not what you assume. Involvement and responsibility are different.",
+            es: "Deducción de Ranpo: Mira lo que la evidencia realmente prueba, no lo que asumes. Implicación y responsabilidad son diferentes."
+        },
+        chapter3Connection: {
+            en: "Ranpo's Deduction: Follow the sequence of records. The direction of information flow is the key.",
+            es: "Deducción de Ranpo: Sigue la secuencia de registros. La dirección del flujo de información es la clave."
+        },
+        chapter3Trail: {
+            en: "Ranpo's Deduction: If multiple organizations are following the same path, someone is probably controlling the direction.",
+            es: "Deducción de Ranpo: Si múltiples organizaciones siguen el mismo camino, alguien probablemente está controlando la dirección."
+        },
+
+        meursaultVerbToBe: {
+            en: "Ranpo's Deduction: Focus on subject-verb agreement! Check whether the nearest subject is singular or plural.",
+            es: "Deducción de Ranpo: ¡Concéntrate en la concordancia sujeto-verbo! Verifica si el sujeto más cercano es singular o plural."
+        },
+        meursaultComparatives: {
+            en: "Ranpo's Deduction: Double comparative structures need exact symmetry between adjectives and adverbs.",
+            es: "Deducción de Ranpo: Las estructuras de doble comparativo necesitan simetría exacta entre adjetivos y adverbios."
+        },
+        meursaultPastSimple: {
+            en: "Ranpo's Deduction: Irregular past forms can be tricky. Look for pure Past Simple rather than Past Perfect.",
+            es: "Deducción de Ranpo: Las formas irregulares del pasado pueden ser complicadas. Busca el Pasado Simple puro en lugar del Pasado Perfecto."
+        },
+        meursaultPastContinuous: {
+            en: "Ranpo's Deduction: Ensure the action was continuously happening when another event interrupted it.",
+            es: "Deducción de Ranpo: Asegúrate de que la acción estaba ocurriendo continuamente cuando otro evento la interrumpió."
+        },
+        meursaultModals: {
+            en: "Ranpo's Deduction: Speculating on past system logs demands 'must have' followed by the past participle.",
+            es: "Deducción de Ranpo: Especular sobre registros pasados del sistema exige 'must have' seguido del participio pasado."
+        },
+        meursaultFinal: {
+            en: "Ranpo's Deduction: Combine every rule! Subject agreement, comparative symmetry, and past modal forms must all match perfectly.",
+            es: "Deducción de Ranpo: ¡Combina todas las reglas! La concordancia del sujeto, la simetría comparativa y las formas modales pasadas deben coincidir perfectamente."
+        },
+
+        chapter4Mixed1: {
+            en: "Ranpo's Deduction: This sentence combines past simple and past continuous. Identify which action was already happening when the second event occurred.",
+            es: "Deducción de Ranpo: Esta oración combina pasado simple y pasado continuo. Identifica qué acción ya estaba ocurriendo cuando sucedió el segundo evento."
+        },
+        chapter4Mixed2: {
+            en: "Ranpo's Deduction: Comparatives describe relationships between two things. Watch for the correct adjective form.",
+            es: "Deducción de Ranpo: Los comparativos describen relaciones entre dos cosas. Observa la forma correcta del adjetivo."
+        },
+        chapter4Mixed3: {
+            en: "Ranpo's Deduction: Modal verbs are followed by the base form. For past deductions, use 'must have + past participle'.",
+            es: "Deducción de Ranpo: Los verbos modales van seguidos de la forma base. Para deducciones pasadas, usa 'must have + participio pasado'."
+        },
+        chapter4Final: {
+            en: "Ranpo's Deduction: Everything matters now. Check subject agreement, tense, comparatives, reported speech, and modal structures before deciding.",
+            es: "Deducción de Ranpo: Ahora todo importa. Verifica la concordancia del sujeto, el tiempo verbal, los comparativos, el estilo indirecto y las estructuras modales antes de decidir."
+        }
+    };
+
+    /* =========================================================
+       QUESTION BANK — CON TRADUCCIÓN EN CADA PREGUNTA Y RESPUESTA
+    ========================================================= */
+    const questionBank = {
+        verbToBe: {
+            easy: {
+                choices: [
+                    { text: "Yesterday, the detective WAS at headquarters.", textEs: "Ayer, el detective ESTUVO en el cuartel general.", correct: true, feedback: "Correct! 'Was' is used for singular past subjects.", feedbackEs: "¡Correcto! 'Was' se usa para sujetos singulares en pasado." },
+                    { text: "Yesterday, the detective WERE at headquarters.", textEs: "Ayer, el detective ESTUVIERON en el cuartel general.", correct: false, feedback: "Incorrect! 'Were' is for plural subjects.", feedbackEs: "¡Incorrecto! 'Were' es para sujetos plurales." },
+                    { text: "Yesterday, the detective AM at headquarters.", textEs: "Ayer, el detective ESTOY en el cuartel general.", correct: false, feedback: "Incorrect! 'Am' is present tense.", feedbackEs: "¡Incorrecto! 'Am' es tiempo presente." }
+                ]
+            },
+            medium: {
+                choices: [
+                    { text: "Yesterday, all agency investigators WERE analyzing the vault blueprints.", textEs: "Ayer, todos los investigadores de la agencia ESTABAN analizando los planos de la bóveda.", correct: true, feedback: "Correct! 'Were' is used for plural past subjects.", feedbackEs: "¡Correcto! 'Were' se usa para sujetos plurales en pasado." },
+                    { text: "Yesterday, all agency investigators WAS analyzing the vault blueprints.", textEs: "Ayer, todos los investigadores de la agencia ESTABA analizando los planos de la bóveda.", correct: false, feedback: "Incorrect! 'Was' is singular.", feedbackEs: "¡Incorrecto! 'Was' es singular." },
+                    { text: "Yesterday, all agency investigators AM analyzing the vault blueprints.", textEs: "Ayer, todos los investigadores de la agencia ESTOY analizando los planos de la bóveda.", correct: false, feedback: "Incorrect! 'Am' is present tense.", feedbackEs: "¡Incorrecto! 'Am' es tiempo presente." }
+                ]
+            },
+            hard: {
+                choices: [
+                    { text: "Neither the investigators nor the captain WERE aware of the leak.", textEs: "Ni los investigadores ni el capitán ESTABAN al tanto de la filtración.", correct: false, feedback: "Incorrect! Verb agrees with nearest subject ('captain', singular).", feedbackEs: "¡Incorrecto! El verbo concuerda con el sujeto más cercano ('captain', singular)." },
+                    { text: "Neither the investigators nor the captain WAS aware of the leak.", textEs: "Ni los investigadores ni el capitán ESTABA al tanto de la filtración.", correct: true, feedback: "Correct! Verb agrees with closer subject ('captain').", feedbackEs: "¡Correcto! El verbo concuerda con el sujeto más cercano ('captain')." },
+                    { text: "Neither the investigators nor the captain BE aware of the leak.", textEs: "Ni los investigadores ni el capitán SER al tanto de la filtración.", correct: false, feedback: "Incorrect! 'Be' alone is ungrammatical here.", feedbackEs: "¡Incorrecto! 'Be' solo no es gramatical aquí." }
+                ]
+            }
+        },
+
+        comparatives: {
+            easy: {
+                choices: [
+                    { text: "This case is HARDER than the last one.", textEs: "Este caso es MÁS DIFÍCIL que el anterior.", correct: true, feedback: "Correct! 'Harder' is the standard comparative.", feedbackEs: "¡Correcto! 'Harder' es el comparativo estándar." },
+                    { text: "This case is MORE HARD than the last one.", textEs: "Este caso es MÁS DIFÍCIL que el anterior.", correct: false, feedback: "Incorrect! Short adjectives use '-er'.", feedbackEs: "¡Incorrecto! Los adjetivos cortos usan '-er'." },
+                    { text: "This case is HARDEST than the last one.", textEs: "Este caso es EL MÁS DIFÍCIL que el anterior.", correct: false, feedback: "Incorrect! 'Hardest' is superlative.", feedbackEs: "¡Incorrecto! 'Hardest' es superlativo." }
+                ]
+            },
+            medium: {
+                choices: [
+                    { text: "Dazai's strategy was GOODER than the rival guild's trap.", textEs: "La estrategia de Dazai fue MÁS BUENA que la trampa del gremio rival.", correct: false, feedback: "Incorrect! Irregular comparative of 'good' is 'better'.", feedbackEs: "¡Incorrecto! El comparativo irregular de 'good' es 'better'." },
+                    { text: "Dazai's strategy was MORE BETTER than the rival guild's trap.", textEs: "La estrategia de Dazai fue MÁS MEJOR que la trampa del gremio rival.", correct: false, feedback: "Incorrect! Double comparative.", feedbackEs: "¡Incorrecto! Doble comparativo." },
+                    { text: "Dazai's strategy was BETTER than the rival guild's trap.", textEs: "La estrategia de Dazai fue MEJOR que la trampa del gremio rival.", correct: true, feedback: "Correct! 'Better' is the proper comparative.", feedbackEs: "¡Correcto! 'Better' es el comparativo correcto." }
+                ]
+            },
+            hard: {
+                choices: [
+                    { text: "The more clues we find, the CLEARER this case becomes.", textEs: "Cuantas más pistas encontramos, MÁS CLARO se vuelve este caso.", correct: true, feedback: "Correct! Standard double comparative structure.", feedbackEs: "¡Correcto! Estructura estándar de doble comparativo." },
+                    { text: "The more clues we find, the MORE CLEARER this case becomes.", textEs: "Cuantas más pistas encontramos, MÁS MÁS CLARO se vuelve este caso.", correct: false, feedback: "Incorrect! Avoid double comparative.", feedbackEs: "¡Incorrecto! Evita el doble comparativo." },
+                    { text: "The more clues we find, the CLEARLY this case becomes.", textEs: "Cuantas más pistas encontramos, CLARAMENTE se vuelve este caso.", correct: false, feedback: "Incorrect! Requires adjective, not adverb.", feedbackEs: "¡Incorrecto! Requiere un adjetivo, no un adverbio." }
+                ]
+            }
+        },
+
+        pastSimple: {
+            easy: {
+                choices: [
+                    { text: "Atsushi FIND the secret document under the table.", textEs: "Atsushi ENCUENTRA el documento secreto bajo la mesa.", correct: false, feedback: "Incorrect! Present tense.", feedbackEs: "¡Incorrecto! Tiempo presente." },
+                    { text: "Atsushi FOUND the secret document under the table.", textEs: "Atsushi ENCONTRÓ el documento secreto bajo la mesa.", correct: true, feedback: "Correct! Irregular past simple of 'find'.", feedbackEs: "¡Correcto! Pasado simple irregular de 'find'." },
+                    { text: "Atsushi FINDED the secret document under the table.", textEs: "Atsushi ENCONTRÓ el documento secreto bajo la mesa.", correct: false, feedback: "Incorrect! 'Find' is irregular.", feedbackEs: "¡Incorrecto! 'Find' es irregular." }
+                ]
+            },
+            medium: {
+                choices: [
+                    { text: "The suspect RAN away when the alarm sounded.", textEs: "El sospechoso HUYÓ cuando sonó la alarma.", correct: true, feedback: "Correct! Past simple of 'run'.", feedbackEs: "¡Correcto! Pasado simple de 'run'." },
+                    { text: "The suspect RUNNED away when the alarm sounded.", textEs: "El sospechoso CORRIÓ cuando sonó la alarma.", correct: false, feedback: "Incorrect! Irregular verb.", feedbackEs: "¡Incorrecto! Verbo irregular." },
+                    { text: "The suspect RUN away when the alarm sounded.", textEs: "El sospechoso CORRER cuando sonó la alarma.", correct: false, feedback: "Incorrect! Unconjugated present.", feedbackEs: "¡Incorrecto! Presente sin conjugar." }
+                ]
+            },
+            hard: {
+                choices: [
+                    { text: "The culprit HAD FLED before police arrived.", textEs: "El culpable HABÍA HUIDO antes de que llegara la policía.", correct: false, feedback: "Incorrect! Past perfect, not past simple.", feedbackEs: "¡Incorrecto! Pasado perfecto, no pasado simple." },
+                    { text: "The culprit FLED before police arrived.", textEs: "El culpable HUYÓ antes de que llegara la policía.", correct: true, feedback: "Correct! Irregular past simple of 'flee'.", feedbackEs: "¡Correcto! Pasado simple irregular de 'flee'." },
+                    { text: "The culprit FLEED before police arrived.", textEs: "El culpable HUIDO antes de que llegara la policía.", correct: false, feedback: "Incorrect! Misspelled irregular form.", feedbackEs: "¡Incorrecto! Forma irregular mal escrita." }
+                ]
+            }
+        },
+
+        pastContinuous: {
+            easy: {
+                choices: [
+                    { text: "At 10 PM, Kunikida WAS WRITING in his notebook.", textEs: "A las 10 PM, Kunikida ESTABA ESCRIBIENDO en su cuaderno.", correct: true, feedback: "Correct! Singular past continuous.", feedbackEs: "¡Correcto! Pasado continuo singular." },
+                    { text: "At 10 PM, Kunikida WERE WRITING in his notebook.", textEs: "A las 10 PM, Kunikida ESTABAN ESCRIBIENDO en su cuaderno.", correct: false, feedback: "Incorrect! Plural verb used.", feedbackEs: "¡Incorrecto! Se usó un verbo plural." },
+                    { text: "At 10 PM, Kunikida IS WRITING in his notebook.", textEs: "A las 10 PM, Kunikida ESTÁ ESCRIBIENDO en su cuaderno.", correct: false, feedback: "Incorrect! Present continuous.", feedbackEs: "¡Incorrecto! Presente continuo." }
+                ]
+            },
+            medium: {
+                choices: [
+                    { text: "While Dazai WAS SEARCHING the office, the phone rang.", textEs: "Mientras Dazai ESTABA BUSCANDO en la oficina, sonó el teléfono.", correct: true, feedback: "Correct! Singular past continuous.", feedbackEs: "¡Correcto! Pasado continuo singular." },
+                    { text: "While Dazai WERE SEARCHING the office, the phone rang.", textEs: "Mientras Dazai ESTABAN BUSCANDO en la oficina, sonó el teléfono.", correct: false, feedback: "Incorrect! Plural verb.", feedbackEs: "¡Incorrecto! Verbo plural." },
+                    { text: "While Dazai SEARCHED the office, the phone WAS RANG.", textEs: "Mientras Dazai BUSCÓ en la oficina, el teléfono FUE SONADO.", correct: false, feedback: "Incorrect! Incorrect passive structure.", feedbackEs: "¡Incorrecto! Estructura pasiva incorrecta." }
+                ]
+            },
+            hard: {
+                choices: [
+                    { text: "They WAS INVESTIGATING the scene when the blackout occurred.", textEs: "Ellos ESTABA INVESTIGANDO la escena cuando ocurrió el apagón.", correct: false, feedback: "Incorrect! 'They' requires 'were'.", feedbackEs: "¡Incorrecto! 'They' requiere 'were'." },
+                    { text: "They WERE INVESTIGATING the scene when the blackout occurred.", textEs: "Ellos ESTABAN INVESTIGANDO la escena cuando ocurrió el apagón.", correct: true, feedback: "Correct! Plural past continuous.", feedbackEs: "¡Correcto! Pasado continuo plural." },
+                    { text: "They WERE INVESTIGATE the scene when the blackout occurred.", textEs: "Ellos ESTABAN INVESTIGAR la escena cuando ocurrió el apagón.", correct: false, feedback: "Incorrect! Missing '-ing'.", feedbackEs: "¡Incorrecto! Falta '-ing'." }
+                ]
+            }
+        },
+
+        modals: {
+            easy: {
+                choices: [
+                    { text: "Detectives MUST follow the law during searches.", textEs: "Los detectives DEBEN seguir la ley durante los registros.", correct: true, feedback: "Correct! Indicates strong obligation.", feedbackEs: "¡Correcto! Indica obligación fuerte." },
+                    { text: "Detectives MUST TO follow the law during searches.", textEs: "Los detectives DEBEN A seguir la ley durante los registros.", correct: false, feedback: "Incorrect! Modals are followed by base verb without 'to'.", feedbackEs: "¡Incorrecto! Los modales van seguidos del verbo base sin 'to'." },
+                    { text: "Detectives MUST FOLLOWING the law during searches.", textEs: "Los detectives DEBEN SIGUIENDO la ley durante los registros.", correct: false, feedback: "Incorrect! Modal + base form required.", feedbackEs: "¡Incorrecto! Se requiere modal + forma base." }
+                ]
+            },
+            medium: {
+                choices: [
+                    { text: "You SHOULD NOT trust unverified evidence.", textEs: "No DEBERÍAS confiar en evidencia no verificada.", correct: true, feedback: "Correct! Standard negative recommendation.", feedbackEs: "¡Correcto! Recomendación negativa estándar." },
+                    { text: "You SHOULD TO NOT trust unverified evidence.", textEs: "Tú DEBERÍAS A NO confiar en evidencia no verificada.", correct: false, feedback: "Incorrect! 'To' is invalid after modal.", feedbackEs: "¡Incorrecto! 'To' no es válido después de un modal." },
+                    { text: "You DON'T SHOULD trust unverified evidence.", textEs: "Tú NO DEBERÍAS confiar en evidencia no verificada.", correct: false, feedback: "Incorrect! Invalid double auxiliary.", feedbackEs: "¡Incorrecto! Doble auxiliar inválido." }
+                ]
+            },
+            hard: {
+                choices: [
+                    { text: "The culprit MUST HAVE KNOWN the combination beforehand.", textEs: "El culpable DEBÍA HABER SABIDO la combinación de antemano.", correct: true, feedback: "Correct! Modal of past deduction.", feedbackEs: "¡Correcto! Modal de deducción pasada." },
+                    { text: "The culprit MUST HAS KNOWN the combination beforehand.", textEs: "El culpable DEBE HA SABIDO la combinación de antemano.", correct: false, feedback: "Incorrect! Always 'have' after modal.", feedbackEs: "¡Incorrecto! Siempre 'have' después del modal." },
+                    { text: "The culprit MUST HAD KNOWN the combination beforehand.", textEs: "El culpable DEBE HABÍA SABIDO la combinación de antemano.", correct: false, feedback: "Incorrect! Always base form 'have'.", feedbackEs: "¡Incorrecto! Siempre la forma base 'have'." }
+                ]
+            }
+        },
+
+        poeRanpo: {
+            easy: {
+                choices: [
+                    { text: "If Poe finds the original document, Ranpo IS able to compare the evidence.", textEs: "Si Poe encuentra el documento original, Ranpo PUEDE comparar la evidencia.", correct: true, feedback: "Correct! 'Is' agrees with the singular subject 'Ranpo'.", feedbackEs: "¡Correcto! 'Is' concuerda con el sujeto singular 'Ranpo'." },
+                    { text: "If Poe finds the original document, Ranpo ARE able to compare the evidence.", textEs: "Si Poe encuentra el documento original, Ranpo PUEDEN comparar la evidencia.", correct: false, feedback: "Incorrect! 'Ranpo' is singular, so use 'is'.", feedbackEs: "¡Incorrecto! 'Ranpo' es singular, usa 'is'." },
+                    { text: "If Poe find the original document, Ranpo is able to compare the evidence.", textEs: "Si Poe ENCUENTRA el documento original, Ranpo puede comparar la evidencia.", correct: false, feedback: "Incorrect! Third-person singular requires 'finds'.", feedbackEs: "¡Incorrecto! La tercera persona singular requiere 'finds'." }
+                ]
+            },
+            medium: {
+                choices: [
+                    { text: "Had Poe not recognized the pattern, the investigators WOULD HAVE MISSED the connection.", textEs: "Si Poe no hubiera reconocido el patrón, los investigadores HABRÍAN PERDIDO la conexión.", correct: true, feedback: "Correct! This is an inverted third conditional.", feedbackEs: "¡Correcto! Este es un tercer condicional invertido." },
+                    { text: "Had Poe not recognized the pattern, the investigators WOULD HAS MISSED the connection.", textEs: "Si Poe no hubiera reconocido el patrón, los investigadores HABRÍA PERDIDO la conexión.", correct: false, feedback: "Incorrect! 'Would' must be followed by the base form 'have'.", feedbackEs: "¡Incorrecto! 'Would' debe ir seguido de la forma base 'have'." },
+                    { text: "Had Poe not recognized the pattern, the investigators WILL HAVE MISSED the connection.", textEs: "Si Poe no hubiera reconocido el patrón, los investigadores HABRÁN PERDIDO la conexión.", correct: false, feedback: "Incorrect! A hypothetical past result requires 'would have'.", feedbackEs: "¡Incorrecto! Un resultado pasado hipotético requiere 'would have'." }
+                ]
+            },
+            hard: {
+                choices: [
+                    { text: "Had Ranpo not compared the documents, Poe WOULD HAVE REMAINED uncertain about the cipher.", textEs: "Si Ranpo no hubiera comparado los documentos, Poe HABRÍA PERMANECIDO inseguro sobre el cifrado.", correct: true, feedback: "Correct! The inverted third conditional uses 'Had + subject + past participle' and 'would have + past participle'.", feedbackEs: "¡Correcto! El tercer condicional invertido usa 'Had + sujeto + participio pasado' y 'would have + participio pasado'." },
+                    { text: "Had Ranpo not compared the documents, Poe WOULD HAS REMAINED uncertain about the cipher.", textEs: "Si Ranpo no hubiera comparado los documentos, Poe HABRÍA PERMANECIDO inseguro sobre el cifrado.", correct: false, feedback: "Incorrect! Modal 'would' requires the base form 'have'.", feedbackEs: "¡Incorrecto! El modal 'would' requiere la forma base 'have'." },
+                    { text: "Had Ranpo not compared the documents, Poe WOULD REMAINED uncertain about the cipher.", textEs: "Si Ranpo no hubiera comparado los documentos, Poe PERMANECIÓ inseguro sobre el cifrado.", correct: false, feedback: "Incorrect! The result requires 'would have remained'.", feedbackEs: "¡Incorrecto! El resultado requiere 'would have remained'." }
+                ]
+            }
+        },
+
+        atsushiLucy: {
+            easy: {
+                choices: [
+                    { text: "Lucy, WHO discovered the document, gave it to Atsushi.", textEs: "Lucy, QUIEN descubrió el documento, se lo dio a Atsushi.", correct: true, feedback: "Correct! 'Who' is used for people.", feedbackEs: "¡Correcto! 'Who' se usa para personas." },
+                    { text: "Lucy, WHICH discovered the document, gave it to Atsushi.", textEs: "Lucy, EL CUAL descubrió el documento, se lo dio a Atsushi.", correct: false, feedback: "Incorrect! 'Which' is normally used for things, not people.", feedbackEs: "¡Incorrecto! 'Which' se usa normalmente para cosas, no personas." },
+                    { text: "Lucy, WHERE discovered the document, gave it to Atsushi.", textEs: "Lucy, DONDE descubrió el documento, se lo dio a Atsushi.", correct: false, feedback: "Incorrect! 'Where' refers to places.", feedbackEs: "¡Incorrecto! 'Where' se refiere a lugares." }
+                ]
+            },
+            medium: {
+                choices: [
+                    { text: "Atsushi SAID THAT Lucy had found the missing evidence.", textEs: "Atsushi DIJO QUE Lucy había encontrado la evidencia faltante.", correct: true, feedback: "Correct! Reported speech uses the appropriate past tense shift.", feedbackEs: "¡Correcto! El estilo indirecto usa el cambio de tiempo pasado apropiado." },
+                    { text: "Atsushi SAID THAT Lucy HAS find the missing evidence.", textEs: "Atsushi DIJO QUE Lucy HA encontrar la evidencia faltante.", correct: false, feedback: "Incorrect! The verb structure is not grammatically correct.", feedbackEs: "¡Incorrecto! La estructura verbal no es gramaticalmente correcta." },
+                    { text: "Atsushi TOLD THAT Lucy had found the missing evidence.", textEs: "Atsushi DIJO QUE Lucy había encontrado la evidencia faltante.", correct: false, feedback: "Incorrect! 'Tell' normally requires an object, such as 'told Lucy'.", feedbackEs: "¡Incorrecto! 'Tell' normalmente requiere un objeto, como 'told Lucy'." }
+                ]
+            },
+            hard: {
+                choices: [
+                    { text: "Lucy asked Atsushi WHETHER HE HAD SEEN the same symbol before.", textEs: "Lucy le preguntó a Atsushi SI ÉL HABÍA VISTO el mismo símbolo antes.", correct: true, feedback: "Correct! This is a correctly formed indirect question.", feedbackEs: "¡Correcto! Esta es una pregunta indirecta correctamente formada." },
+                    { text: "Lucy asked Atsushi WHETHER HAD HE SEEN the same symbol before.", textEs: "Lucy le preguntó a Atsushi SI HABÍA ÉL VISTO el mismo símbolo antes.", correct: false, feedback: "Incorrect! Indirect questions do not use normal question word order.", feedbackEs: "¡Incorrecto! Las preguntas indirectas no usan el orden normal de pregunta." },
+                    { text: "Lucy asked Atsushi THAT DID HE SEE the same symbol before.", textEs: "Lucy le preguntó a Atsushi QUE VIO ÉL el mismo símbolo antes.", correct: false, feedback: "Incorrect! 'That did he see' is not a valid indirect-question structure.", feedbackEs: "¡Incorrecto! 'That did he see' no es una estructura válida de pregunta indirecta." }
+                ]
+            }
+        },
+
+        chapter3Guild: {
+            easy: {
+                choices: [
+                    { text: "The Guild was directly responsible for the entire operation.", textEs: "El Gremio fue directamente responsable de toda la operación.", correct: false, feedback: "You're jumping from involvement to responsibility. The evidence doesn't prove that.", feedbackEs: "Estás saltando de implicación a responsabilidad. La evidencia no prueba eso." },
+                    { text: "The Guild had information, but someone else may have used it.", textEs: "El Gremio tenía información, pero alguien más pudo haberla usado.", correct: true, feedback: "Correct. The evidence proves the Guild was involved, not that they controlled the entire investigation.", feedbackEs: "Correcto. La evidencia prueba que el Gremio estuvo involucrado, no que controló toda la investigación." },
+                    { text: "The Guild had nothing to do with the Book.", textEs: "El Gremio no tuvo nada que ver con el Libro.", correct: false, feedback: "Incorrect. The documents clearly connect the Guild to the Book.", feedbackEs: "Incorrecto. Los documentos conectan claramente al Gremio con el Libro." }
+                ]
+            },
+            medium: {
+                choices: [
+                    { text: "The Guild's records prove they were the primary conspirators.", textEs: "Los registros del Gremio prueban que fueron los principales conspiradores.", correct: false, feedback: "Incorrect. The records show involvement, but not central control.", feedbackEs: "Incorrecto. Los registros muestran implicación, pero no control central." },
+                    { text: "The Guild's records show they had information, but the timeline suggests someone else was directing the investigation.", textEs: "Los registros del Gremio muestran que tenían información, pero la línea temporal sugiere que alguien más dirigía la investigación.", correct: true, feedback: "Correct. The records establish involvement, but the sequence of events suggests an external manipulator.", feedbackEs: "Correcto. Los registros establecen implicación, pero la secuencia de eventos sugiere un manipulador externo." },
+                    { text: "The Guild's records are completely fabricated.", textEs: "Los registros del Gremio están completamente fabricados.", correct: false, feedback: "Incorrect. The documents are genuine, even if they don't tell the whole story.", feedbackEs: "Incorrecto. Los documentos son genuinos, aunque no cuenten toda la historia." }
+                ]
+            },
+            hard: {
+                choices: [
+                    { text: "The Guild's involvement was genuine, but the structure of the information suggests it was intentionally placed to be found.", textEs: "La implicación del Gremio fue genuina, pero la estructura de la información sugiere que fue colocada intencionalmente para ser encontrada.", correct: true, feedback: "Correct. The evidence suggests the Guild was a piece of a larger design, not the designer.", feedbackEs: "Correcto. La evidencia sugiere que el Gremio fue una pieza de un diseño mayor, no el diseñador." },
+                    { text: "The Guild controlled every piece of evidence in the case.", textEs: "El Gremio controló cada pieza de evidencia en el caso.", correct: false, feedback: "Incorrect. Multiple organizations were involved, suggesting a broader manipulation.", feedbackEs: "Incorrecto. Múltiples organizaciones estuvieron involucradas, sugiriendo una manipulación más amplia." },
+                    { text: "The Guild had no real involvement and the evidence was completely forged.", textEs: "El Gremio no tuvo implicación real y la evidencia fue completamente falsificada.", correct: false, feedback: "Incorrect. The documents are authentic, even if their role in the case was manipulated.", feedbackEs: "Incorrecto. Los documentos son auténticos, aunque su papel en el caso fue manipulado." }
+                ]
+            }
+        },
+
+        chapter3Connection: {
+            easy: {
+                choices: [
+                    { text: "Guild → Rats → Book", textEs: "Gremio → Ratas → Libro", correct: true, feedback: "Correct. The records show that information about the Book moved from the Guild's investigation toward the Rats.", feedbackEs: "Correcto. Los registros muestran que la información sobre el Libro se movió de la investigación del Gremio hacia las Ratas." },
+                    { text: "Guild → Mafia → Book", textEs: "Gremio → Mafia → Libro", correct: false, feedback: "Incorrect. The evidence doesn't establish the Mafia as the link between the Guild and the Book.", feedbackEs: "Incorrecto. La evidencia no establece a la Mafia como el vínculo entre el Gremio y el Libro." },
+                    { text: "Rats → Guild → Meursault", textEs: "Ratas → Gremio → Meursault", correct: false, feedback: "Incorrect. That reverses the sequence established by the records.", feedbackEs: "Incorrecto. Eso invierte la secuencia establecida por los registros." }
+                ]
+            },
+            medium: {
+                choices: [
+                    { text: "Guild → Rats → Mafia → Book", textEs: "Gremio → Ratas → Mafia → Libro", correct: true, feedback: "Correct. The full sequence shows the Guild's information flowing to the Rats, then to the Mafia.", feedbackEs: "Correcto. La secuencia completa muestra la información del Gremio fluyendo a las Ratas, luego a la Mafia." },
+                    { text: "Guild → Mafia → Rats → Book", textEs: "Gremio → Mafia → Ratas → Libro", correct: false, feedback: "Incorrect. The Mafia received the information after the Rats, not before.", feedbackEs: "Incorrecto. La Mafia recibió la información después de las Ratas, no antes." },
+                    { text: "Rats → Guild → Mafia → Book", textEs: "Ratas → Gremio → Mafia → Libro", correct: false, feedback: "Incorrect. This reverses the actual flow of information.", feedbackEs: "Incorrecto. Esto invierte el flujo real de información." }
+                ]
+            },
+            hard: {
+                choices: [
+                    { text: "Guild → Rats → Mafia → Book → Meursault", textEs: "Gremio → Ratas → Mafia → Libro → Meursault", correct: true, feedback: "Correct. The complete chain shows how the trail was constructed to lead from each organization to the next, eventually pointing toward Meursault.", feedbackEs: "Correcto. La cadena completa muestra cómo se construyó el rastro para llevar de cada organización a la siguiente, apuntando finalmente hacia Meursault." },
+                    { text: "Guild → Mafia → Rats → Book → Meursault", textEs: "Gremio → Mafia → Ratas → Libro → Meursault", correct: false, feedback: "Incorrect. The Mafia received the information after the Rats, according to the records.", feedbackEs: "Incorrecto. La Mafia recibió la información después de las Ratas, según los registros." },
+                    { text: "Book → Guild → Rats → Mafia → Meursault", textEs: "Libro → Gremio → Ratas → Mafia → Meursault", correct: false, feedback: "Incorrect. The Book was the destination of the information, not the starting point.", feedbackEs: "Incorrecto. El Libro era el destino de la información, no el punto de partida." }
+                ]
+            }
+        },
+
+        chapter3Trail: {
+            easy: {
+                choices: [
+                    { text: "The Guild planned everything from the beginning.", textEs: "El Gremio planeó todo desde el principio.", correct: false, feedback: "Incorrect. The Guild was part of the trail, but the evidence doesn't show that they controlled it.", feedbackEs: "Incorrecto. El Gremio fue parte del rastro, pero la evidencia no muestra que lo controlara." },
+                    { text: "The Rats secretly controlled every organization involved.", textEs: "Las Ratas controlaban secretamente cada organización involucrada.", correct: false, feedback: "Incorrect. The Rats were following information too. They were another piece of the trail.", feedbackEs: "Incorrecto. Las Ratas también seguían información. Eran otra pieza del rastro." },
+                    { text: "Someone manipulated multiple organizations into following the same trail.", textEs: "Alguien manipuló a múltiples organizaciones para que siguieran el mismo rastro.", correct: true, feedback: "Correct. The evidence suggests that someone was controlling the direction of the investigation.", feedbackEs: "Correcto. La evidencia sugiere que alguien estaba controlando la dirección de la investigación." }
+                ]
+            },
+            medium: {
+                choices: [
+                    { text: "The trail was designed to make each organization believe they were investigating independently.", textEs: "El rastro fue diseñado para hacer que cada organización creyera que investigaba independientemente.", correct: true, feedback: "Correct. The evidence suggests a designed trail that gave each organization the illusion of independent discovery.", feedbackEs: "Correcto. La evidencia sugiere un rastro diseñado que dio a cada organización la ilusión de descubrimiento independiente." },
+                    { text: "The trail was caused by coincidental connections between organizations.", textEs: "El rastro fue causado por conexiones coincidentes entre organizaciones.", correct: false, feedback: "Incorrect. The pattern of connections is too consistent to be coincidental.", feedbackEs: "Incorrecto. El patrón de conexiones es demasiado consistente para ser coincidencia." },
+                    { text: "The trail was controlled by the Mafia to eliminate their rivals.", textEs: "El rastro fue controlado por la Mafia para eliminar a sus rivales.", correct: false, feedback: "Incorrect. The Mafia was another organization following the trail, not the one creating it.", feedbackEs: "Incorrecto. La Mafia era otra organización siguiendo el rastro, no la que lo creaba." }
+                ]
+            },
+            hard: {
+                choices: [
+                    { text: "The trail was intentionally constructed by someone who understood how each organization would investigate and designed the evidence to create specific conclusions.", textEs: "El rastro fue construido intencionalmente por alguien que entendía cómo investigaría cada organización y diseñó la evidencia para crear conclusiones específicas.", correct: true, feedback: "Correct. The complexity and consistency of the trail suggest a deliberate design by someone with knowledge of multiple organizations.", feedbackEs: "Correcto. La complejidad y consistencia del rastro sugieren un diseño deliberado por alguien con conocimiento de múltiples organizaciones." },
+                    { text: "The trail emerged naturally from unrelated investigations that happened to intersect.", textEs: "El rastro surgió naturalmente de investigaciones no relacionadas que casualmente se cruzaron.", correct: false, feedback: "Incorrect. The evidence shows too many deliberate connections for this to be coincidental.", feedbackEs: "Incorrecto. La evidencia muestra demasiadas conexiones deliberadas para que esto sea coincidencia." },
+                    { text: "The trail was a failed attempt by the Guild to confuse their enemies.", textEs: "El rastro fue un intento fallido del Gremio por confundir a sus enemigos.", correct: false, feedback: "Incorrect. The Guild was part of the trail, not its creator.", feedbackEs: "Incorrecto. El Gremio fue parte del rastro, no su creador." }
+                ]
+            }
+        },
+
+        meursaultVerbToBe: {
+            easy: {
+                choices: [
+                    { text: "The security system WAS active.", textEs: "El sistema de seguridad ESTABA activo.", correct: true, feedback: "Correct! 'Was' agrees with the singular subject.", feedbackEs: "¡Correcto! 'Was' concuerda con el sujeto singular." },
+                    { text: "The security system WERE active.", textEs: "El sistema de seguridad ESTABAN activo.", correct: false, feedback: "Incorrect! 'System' is singular.", feedbackEs: "¡Incorrecto! 'System' es singular." },
+                    { text: "The security system ARE active.", textEs: "El sistema de seguridad ESTÁN activo.", correct: false, feedback: "Incorrect! The sentence refers to the past.", feedbackEs: "¡Incorrecto! La oración se refiere al pasado." }
+                ]
+            },
+            medium: {
+                choices: [
+                    { text: "Neither the guards nor the main terminal WAS operational.", textEs: "Ni los guardias ni la terminal principal ESTABA operativa.", correct: true, feedback: "Correct! The nearest subject, 'terminal', is singular.", feedbackEs: "¡Correcto! El sujeto más cercano, 'terminal', es singular." },
+                    { text: "Neither the guards nor the main terminal WERE operational.", textEs: "Ni los guardias ni la terminal principal ESTABAN operativa.", correct: false, feedback: "Incorrect! The nearest subject is singular.", feedbackEs: "¡Incorrecto! El sujeto más cercano es singular." },
+                    { text: "Neither the guards nor the main terminal BE operational.", textEs: "Ni los guardias ni la terminal principal SER operativa.", correct: false, feedback: "Incorrect! 'Be' cannot function alone here.", feedbackEs: "¡Incorrecto! 'Be' no puede funcionar solo aquí." }
+                ]
+            },
+            hard: {
+                choices: [
+                    { text: "Had the emergency systems not been checked, the facility WERE vulnerable.", textEs: "Si los sistemas de emergencia no hubieran sido revisados, la instalación ESTABAN vulnerable.", correct: false, feedback: "Incorrect! 'Facility' is singular, so use 'was'.", feedbackEs: "¡Incorrecto! 'Facility' es singular, usa 'was'." },
+                    { text: "Had the emergency systems not been checked, the facility WAS vulnerable.", textEs: "Si los sistemas de emergencia no hubieran sido revisados, la instalación ESTABA vulnerable.", correct: true, feedback: "Correct! 'Facility' is singular.", feedbackEs: "¡Correcto! 'Facility' es singular." },
+                    { text: "Had the emergency systems not been checked, the facility ARE vulnerable.", textEs: "Si los sistemas de emergencia no hubieran sido revisados, la instalación ESTÁN vulnerable.", correct: false, feedback: "Incorrect! The hypothetical situation is in the past.", feedbackEs: "¡Incorrecto! La situación hipotética está en el pasado." }
+                ]
+            }
+        },
+
+        meursaultComparatives: {
+            easy: {
+                choices: [
+                    { text: "This security door is HARDER to open than the first one.", textEs: "Esta puerta de seguridad es MÁS DIFÍCIL de abrir que la primera.", correct: true, feedback: "Correct! 'Harder' is the comparative form.", feedbackEs: "¡Correcto! 'Harder' es la forma comparativa." },
+                    { text: "This security door is HARDEST to open than the first one.", textEs: "Esta puerta de seguridad es LA MÁS DIFÍCIL de abrir que la primera.", correct: false, feedback: "Incorrect! 'Hardest' is superlative.", feedbackEs: "¡Incorrecto! 'Hardest' es superlativo." },
+                    { text: "This security door is MORE HARDER to open than the first one.", textEs: "Esta puerta de seguridad es MÁS MÁS DIFÍCIL de abrir que la primera.", correct: false, feedback: "Incorrect! Double comparative.", feedbackEs: "¡Incorrecto! Doble comparativo." }
+                ]
+            },
+            medium: {
+                choices: [
+                    { text: "The second security layer is MORE COMPLEX than the first.", textEs: "La segunda capa de seguridad es MÁS COMPLEJA que la primera.", correct: true, feedback: "Correct! 'More complex' is the proper comparative.", feedbackEs: "¡Correcto! 'More complex' es el comparativo correcto." },
+                    { text: "The second security layer is COMPLEXER than the first.", textEs: "La segunda capa de seguridad es MÁS COMPLEJA que la primera.", correct: false, feedback: "Incorrect! Use 'more complex'.", feedbackEs: "¡Incorrecto! Usa 'more complex'." },
+                    { text: "The second security layer is MOST COMPLEX than the first.", textEs: "La segunda capa de seguridad es LA MÁS COMPLEJA que la primera.", correct: false, feedback: "Incorrect! 'Most complex' is superlative.", feedbackEs: "¡Incorrecto! 'Most complex' es superlativo." }
+                ]
+            },
+            hard: {
+                choices: [
+                    { text: "The more carefully we analyze the code, the CLEARER the pattern becomes.", textEs: "Cuanto más cuidadosamente analizamos el código, MÁS CLARO se vuelve el patrón.", correct: true, feedback: "Correct! This uses the double comparative structure.", feedbackEs: "¡Correcto! Esto usa la estructura de doble comparativo." },
+                    { text: "The more carefully we analyze the code, the MORE CLEARER the pattern becomes.", textEs: "Cuanto más cuidadosamente analizamos el código, MÁS MÁS CLARO se vuelve el patrón.", correct: false, feedback: "Incorrect! Avoid the double comparative.", feedbackEs: "¡Incorrecto! Evita el doble comparativo." },
+                    { text: "The more carefully we analyze the code, the CLEARLY the pattern becomes.", textEs: "Cuanto más cuidadosamente analizamos el código, CLARAMENTE se vuelve el patrón.", correct: false, feedback: "Incorrect! The sentence requires an adjective.", feedbackEs: "¡Incorrecto! La oración requiere un adjetivo." }
+                ]
+            }
+        },
+
+        meursaultPastSimple: {
+            easy: {
+                choices: [
+                    { text: "Sigma FOUND the emergency terminal.", textEs: "Sigma ENCONTRÓ la terminal de emergencia.", correct: true, feedback: "Correct! 'Found' is the past simple of 'find'.", feedbackEs: "¡Correcto! 'Found' es el pasado simple de 'find'." },
+                    { text: "Sigma FIND the emergency terminal.", textEs: "Sigma ENCUENTRA la terminal de emergencia.", correct: false, feedback: "Incorrect! This is present tense.", feedbackEs: "¡Incorrecto! Esto es tiempo presente." },
+                    { text: "Sigma FINDED the emergency terminal.", textEs: "Sigma ENCONTRÓ la terminal de emergencia.", correct: false, feedback: "Incorrect! 'Find' is an irregular verb.", feedbackEs: "¡Incorrecto! 'Find' es un verbo irregular." }
+                ]
+            },
+            medium: {
+                choices: [
+                    { text: "Nikolai BROKE the first security seal.", textEs: "Nikolai ROMPIÓ el primer sello de seguridad.", correct: true, feedback: "Correct! 'Broke' is the past simple of 'break'.", feedbackEs: "¡Correcto! 'Broke' es el pasado simple de 'break'." },
+                    { text: "Nikolai BREAKED the first security seal.", textEs: "Nikolai ROMPIÓ el primer sello de seguridad.", correct: false, feedback: "Incorrect! 'Break' is irregular.", feedbackEs: "¡Incorrecto! 'Break' es irregular." },
+                    { text: "Nikolai BREAK the first security seal.", textEs: "Nikolai ROMPER el primer sello de seguridad.", correct: false, feedback: "Incorrect! The sentence requires past simple.", feedbackEs: "¡Incorrecto! La oración requiere pasado simple." }
+                ]
+            },
+            hard: {
+                choices: [
+                    { text: "Fyodor HAD LEFT before the final alarm sounded.", textEs: "Fyodor HABÍA SALIDO antes de que sonara la alarma final.", correct: false, feedback: "Incorrect! This is past perfect, not simple past.", feedbackEs: "¡Incorrecto! Esto es pasado perfecto, no pasado simple." },
+                    { text: "Fyodor LEFT before the final alarm sounded.", textEs: "Fyodor SALIÓ antes de que sonara la alarma final.", correct: true, feedback: "Correct! 'Left' is the irregular past simple of 'leave'.", feedbackEs: "¡Correcto! 'Left' es el pasado simple irregular de 'leave'." },
+                    { text: "Fyodor LEAVED before the final alarm sounded.", textEs: "Fyodor SALIÓ antes de que sonara la alarma final.", correct: false, feedback: "Incorrect! 'Leave' is irregular.", feedbackEs: "¡Incorrecto! 'Leave' es irregular." }
+                ]
+            }
+        },
+
+        meursaultPastContinuous: {
+            easy: {
+                choices: [
+                    { text: "At midnight, Sigma WAS CHECKING the terminal.", textEs: "A medianoche, Sigma ESTABA REVISANDO la terminal.", correct: true, feedback: "Correct! Singular subject + 'was' + -ing.", feedbackEs: "¡Correcto! Sujeto singular + 'was' + -ing." },
+                    { text: "At midnight, Sigma WERE CHECKING the terminal.", textEs: "A medianoche, Sigma ESTABAN REVISANDO la terminal.", correct: false, feedback: "Incorrect! Sigma is singular.", feedbackEs: "¡Incorrecto! Sigma es singular." },
+                    { text: "At midnight, Sigma IS CHECKING the terminal.", textEs: "A medianoche, Sigma ESTÁ REVISANDO la terminal.", correct: false, feedback: "Incorrect! The action happened in the past.", feedbackEs: "¡Incorrecto! La acción ocurrió en el pasado." }
+                ]
+            },
+            medium: {
+                choices: [
+                    { text: "While Nikolai WAS SEARCHING the corridor, Sigma decoded the password.", textEs: "Mientras Nikolai ESTABA BUSCANDO en el pasillo, Sigma descifró la contraseña.", correct: true, feedback: "Correct! 'Was searching' is past continuous.", feedbackEs: "¡Correcto! 'Was searching' es pasado continuo." },
+                    { text: "While Nikolai WERE SEARCHING the corridor, Sigma decoded the password.", textEs: "Mientras Nikolai ESTABAN BUSCANDO en el pasillo, Sigma descifró la contraseña.", correct: false, feedback: "Incorrect! Nikolai is singular.", feedbackEs: "¡Incorrecto! Nikolai es singular." },
+                    { text: "While Nikolai SEARCH the corridor, Sigma decoded the password.", textEs: "Mientras Nikolai BUSCAR en el pasillo, Sigma descifró la contraseña.", correct: false, feedback: "Incorrect! The ongoing action needs past continuous.", feedbackEs: "¡Incorrecto! La acción en curso necesita pasado continuo." }
+                ]
+            },
+            hard: {
+                choices: [
+                    { text: "Dazai and Fyodor WAS WAITING when the final door opened.", textEs: "Dazai y Fyodor ESTABA ESPERANDO cuando se abrió la puerta final.", correct: false, feedback: "Incorrect! Two subjects require 'were'.", feedbackEs: "¡Incorrecto! Dos sujetos requieren 'were'." },
+                    { text: "Dazai and Fyodor WERE WAITING when the final door opened.", textEs: "Dazai y Fyodor ESTABAN ESPERANDO cuando se abrió la puerta final.", correct: true, feedback: "Correct! Plural subject + 'were' + -ing.", feedbackEs: "¡Correcto! Sujeto plural + 'were' + -ing." },
+                    { text: "Dazai and Fyodor WERE WAIT for the final door to open.", textEs: "Dazai y Fyodor ESTABAN ESPERAR a que se abriera la puerta final.", correct: false, feedback: "Incorrect! Past continuous requires the -ing form.", feedbackEs: "¡Incorrecto! El pasado continuo requiere la forma -ing." }
+                ]
+            }
+        },
+
+        meursaultModals: {
+            easy: {
+                choices: [
+                    { text: "We MUST follow the emergency instructions.", textEs: "Debemos seguir las instrucciones de emergencia.", correct: true, feedback: "Correct! 'Must' expresses strong obligation.", feedbackEs: "¡Correcto! 'Must' expresa obligación fuerte." },
+                    { text: "We MUST TO follow the emergency instructions.", textEs: "Debemos A seguir las instrucciones de emergencia.", correct: false, feedback: "Incorrect! A modal is followed directly by the base verb.", feedbackEs: "¡Incorrecto! Un modal va seguido directamente del verbo base." },
+                    { text: "We MUST FOLLOWING the emergency instructions.", textEs: "Debemos SIGUIENDO las instrucciones de emergencia.", correct: false, feedback: "Incorrect! Use the base verb after 'must'.", feedbackEs: "¡Incorrecto! Usa el verbo base después de 'must'." }
+                ]
+            },
+            medium: {
+                choices: [
+                    { text: "Sigma SHOULD CHECK the final lock before opening it.", textEs: "Sigma DEBERÍA REVISAR la cerradura final antes de abrirla.", correct: true, feedback: "Correct! Modal + base verb.", feedbackEs: "¡Correcto! Modal + verbo base." },
+                    { text: "Sigma SHOULD TO CHECK the final lock before opening it.", textEs: "Sigma DEBERÍA A REVISAR la cerradura final antes de abrirla.", correct: false, feedback: "Incorrect! Do not use 'to' after 'should'.", feedbackEs: "¡Incorrecto! No uses 'to' después de 'should'." },
+                    { text: "Sigma SHOULD CHECKING the final lock before opening it.", textEs: "Sigma DEBERÍA REVISANDO la cerradura final antes de abrirla.", correct: false, feedback: "Incorrect! The modal requires the base form.", feedbackEs: "¡Incorrecto! El modal requiere la forma base." }
+                ]
+            },
+            hard: {
+                choices: [
+                    { text: "They MUST HAVE MISSED the hidden signal.", textEs: "Deben HABER PERDIDO la señal oculta.", correct: true, feedback: "Correct! 'Must have + past participle' expresses a strong past deduction.", feedbackEs: "¡Correcto! 'Must have + participio pasado' expresa una deducción pasada fuerte." },
+                    { text: "They MUST HAS MISSED the hidden signal.", textEs: "Deben HA PERDIDO la señal oculta.", correct: false, feedback: "Incorrect! Modal verbs require the base form 'have'.", feedbackEs: "¡Incorrecto! Los verbos modales requieren la forma base 'have'." },
+                    { text: "They MUST HAD MISSED the hidden signal.", textEs: "Deben HABÍA PERDIDO la señal oculta.", correct: false, feedback: "Incorrect! 'Must' must be followed by base 'have'.", feedbackEs: "¡Incorrecto! 'Must' debe ir seguido de la base 'have'." }
+                ]
+            }
+        },
+
+        meursaultFinal: {
+            easy: {
+                choices: [
+                    { text: "The investigators WERE READY because they HAD FOUND the correct code.", textEs: "Los investigadores ESTABAN LISTOS porque HABÍAN ENCONTRADO el código correcto.", correct: true, feedback: "Correct! The sentence combines correct past forms.", feedbackEs: "¡Correcto! La oración combina formas pasadas correctas." },
+                    { text: "The investigators WAS READY because they FIND the correct code.", textEs: "Los investigadores ESTABA LISTO porque ENCUENTRAN el código correcto.", correct: false, feedback: "Incorrect! The subjects and tenses do not agree.", feedbackEs: "¡Incorrecto! Los sujetos y tiempos no concuerdan." },
+                    { text: "The investigators WERE READY because they HAD FIND the correct code.", textEs: "Los investigadores ESTABAN LISTOS porque HABÍAN ENCONTRAR el código correcto.", correct: false, feedback: "Incorrect! Past perfect requires the past participle 'found'.", feedbackEs: "¡Incorrecto! El pasado perfecto requiere el participio pasado 'found'." }
+                ]
+            },
+            medium: {
+                choices: [
+                    { text: "While Sigma WAS WORKING, Nikolai FOUND a faster route and they COULD escape.", textEs: "Mientras Sigma ESTABA TRABAJANDO, Nikolai ENCONTRÓ una ruta más rápida y pudieron escapar.", correct: true, feedback: "Correct! Past continuous, past simple, and modal usage are all correct.", feedbackEs: "¡Correcto! Pasado continuo, pasado simple y uso modal son todos correctos." },
+                    { text: "While Sigma WERE WORKING, Nikolai FIND a faster route and they COULD TO escape.", textEs: "Mientras Sigma ESTABAN TRABAJANDO, Nikolai ENCONTRAR una ruta más rápida y pudieron A escapar.", correct: false, feedback: "Incorrect! Check subject agreement and modal structure.", feedbackEs: "¡Incorrecto! Verifica la concordancia del sujeto y la estructura modal." },
+                    { text: "While Sigma WAS WORKING, Nikolai FINDED a faster route and they COULD ESCAPING.", textEs: "Mientras Sigma ESTABA TRABAJANDO, Nikolai ENCONTRÓ una ruta más rápida y pudieron ESCAPANDO.", correct: false, feedback: "Incorrect! 'Find' is irregular and modals require the base form.", feedbackEs: "¡Incorrecto! 'Find' es irregular y los modales requieren la forma base." }
+                ]
+            },
+            hard: {
+                choices: [
+                    { text: "The more carefully they ANALYZED the system, the CLEARER it became, and they MUST HAVE FOUND the final weakness.", textEs: "Cuanto más cuidadosamente ANALIZARON el sistema, MÁS CLARO se volvió, y DEBEN HABER ENCONTRADO la debilidad final.", correct: true, feedback: "Correct! This combines past simple, comparatives, and modal deduction.", feedbackEs: "¡Correcto! Esto combina pasado simple, comparativos y deducción modal." },
+                    { text: "The more carefully they ANALYZE the system, the MORE CLEARER it became, and they MUST HAS FOUND the final weakness.", textEs: "Cuanto más cuidadosamente ANALIZAN el sistema, MÁS MÁS CLARO se volvió, y DEBEN HA ENCONTRADO la debilidad final.", correct: false, feedback: "Incorrect! Multiple structures are incorrect.", feedbackEs: "¡Incorrecto! Múltiples estructuras son incorrectas." },
+                    { text: "The more carefully they WERE ANALYZED the system, the CLEARLY it became, and they MUST HAD FOUND the final weakness.", textEs: "Cuanto más cuidadosamente FUERON ANALIZADOS el sistema, CLARAMENTE se volvió, y DEBEN HABÍA ENCONTRADO la debilidad final.", correct: false, feedback: "Incorrect! The sentence mixes incorrect voice, comparative, and modal structures.", feedbackEs: "¡Incorrecto! La oración mezcla voz, comparativo y estructuras modales incorrectas." }
+                ]
+            }
+        },
+
+        chapter4Mixed1: {
+            easy: {
+                choices: [
+                    { text: "While Atsushi WAS READING the report, Lucy found the missing page.", textEs: "Mientras Atsushi ESTABA LEYENDO el informe, Lucy encontró la página faltante.", correct: true, feedback: "Correct! Past continuous describes the ongoing action.", feedbackEs: "¡Correcto! El pasado continuo describe la acción en curso." },
+                    { text: "While Atsushi WERE READING the report, Lucy found the missing page.", textEs: "Mientras Atsushi ESTABAN LEYENDO el informe, Lucy encontró la página faltante.", correct: false, feedback: "Incorrect! 'Atsushi' is singular, so use 'was'.", feedbackEs: "¡Incorrecto! 'Atsushi' es singular, usa 'was'." },
+                    { text: "While Atsushi IS READING the report, Lucy found the missing page.", textEs: "Mientras Atsushi ESTÁ LEYENDO el informe, Lucy encontró la página faltante.", correct: false, feedback: "Incorrect! The event happened in the past.", feedbackEs: "¡Incorrecto! El evento ocurrió en el pasado." }
+                ]
+            },
+            medium: {
+                choices: [
+                    { text: "While Poe WAS ANALYZING the cipher, Ranpo discovered a second pattern.", textEs: "Mientras Poe ESTABA ANALIZANDO el cifrado, Ranpo descubrió un segundo patrón.", correct: true, feedback: "Correct! 'Was analyzing' is the correct past continuous form.", feedbackEs: "¡Correcto! 'Was analyzing' es la forma correcta de pasado continuo." },
+                    { text: "While Poe WERE ANALYZING the cipher, Ranpo discovered a second pattern.", textEs: "Mientras Poe ESTABAN ANALIZANDO el cifrado, Ranpo descubrió un segundo patrón.", correct: false, feedback: "Incorrect! Poe is singular.", feedbackEs: "¡Incorrecto! Poe es singular." },
+                    { text: "While Poe ANALYZE the cipher, Ranpo discovered a second pattern.", textEs: "Mientras Poe ANALIZAR el cifrado, Ranpo descubrió un segundo patrón.", correct: false, feedback: "Incorrect! The ongoing past action requires past continuous.", feedbackEs: "¡Incorrecto! La acción pasada en curso requiere pasado continuo." }
+                ]
+            },
+            hard: {
+                choices: [
+                    { text: "The investigators WERE REVIEWING the files when they FOUND the missing reference.", textEs: "Los investigadores ESTABAN REVISANDO los archivos cuando ENCONTRARON la referencia faltante.", correct: true, feedback: "Correct! Past continuous describes the ongoing investigation, while past simple describes the completed discovery.", feedbackEs: "¡Correcto! El pasado continuo describe la investigación en curso, mientras que el pasado simple describe el descubrimiento completado." },
+                    { text: "The investigators WAS REVIEWING the files when they FIND the missing reference.", textEs: "Los investigadores ESTABA REVISANDO los archivos cuando ENCUENTRAN la referencia faltante.", correct: false, feedback: "Incorrect! 'Investigators' requires 'were', and the completed action needs past simple.", feedbackEs: "¡Incorrecto! 'Investigators' requiere 'were', y la acción completada necesita pasado simple." },
+                    { text: "The investigators WERE REVIEW the files when they HAD FOUND the missing reference.", textEs: "Los investigadores ESTABAN REVISAR los archivos cuando HABÍAN ENCONTRADO la referencia faltante.", correct: false, feedback: "Incorrect! The verb forms do not correctly express the timeline.", feedbackEs: "¡Incorrecto! Las formas verbales no expresan correctamente la línea temporal." }
+                ]
+            }
+        },
+
+        chapter4Mixed2: {
+            easy: {
+                choices: [
+                    { text: "The final clue was CLEARER than the previous one.", textEs: "La pista final fue MÁS CLARA que la anterior.", correct: true, feedback: "Correct! 'Clearer' is the comparative form.", feedbackEs: "¡Correcto! 'Clearer' es la forma comparativa." },
+                    { text: "The final clue was MORE CLEARER than the previous one.", textEs: "La pista final fue MÁS MÁS CLARA que la anterior.", correct: false, feedback: "Incorrect! This is a double comparative.", feedbackEs: "¡Incorrecto! Esto es un doble comparativo." },
+                    { text: "The final clue was CLEAREST than the previous one.", textEs: "La pista final fue LA MÁS CLARA que la anterior.", correct: false, feedback: "Incorrect! 'Clearest' is a superlative.", feedbackEs: "¡Incorrecto! 'Clearest' es un superlativo." }
+                ]
+            },
+            medium: {
+                choices: [
+                    { text: "The more carefully Ranpo examined the evidence, the CLEARER the connection became.", textEs: "Cuanto más cuidadosamente examinaba Ranpo la evidencia, MÁS CLARA se volvía la conexión.", correct: true, feedback: "Correct! This is the correct double comparative structure.", feedbackEs: "¡Correcto! Esta es la estructura correcta de doble comparativo." },
+                    { text: "The more carefully Ranpo examined the evidence, the MORE CLEARER the connection became.", textEs: "Cuanto más cuidadosamente examinaba Ranpo la evidencia, MÁS MÁS CLARA se volvía la conexión.", correct: false, feedback: "Incorrect! Avoid double comparatives.", feedbackEs: "¡Incorrecto! Evita los dobles comparativos." },
+                    { text: "The more carefully Ranpo examined the evidence, the CLEARLY the connection became.", textEs: "Cuanto más cuidadosamente examinaba Ranpo la evidencia, CLARAMENTE se volvía la conexión.", correct: false, feedback: "Incorrect! The sentence requires an adjective.", feedbackEs: "¡Incorrecto! La oración requiere un adjetivo." }
+                ]
+            },
+            hard: {
+                choices: [
+                    { text: "The more evidence they compared, the MORE OBVIOUS the hidden connection became.", textEs: "Cuantas más pruebas comparaban, MÁS OBVIA se volvía la conexión oculta.", correct: true, feedback: "Correct! 'More obvious' is the proper comparative form.", feedbackEs: "¡Correcto! 'More obvious' es la forma comparativa correcta." },
+                    { text: "The more evidence they compared, the MORE OBVIOUSER the hidden connection became.", textEs: "Cuantas más pruebas comparaban, MÁS OBVIA se volvía la conexión oculta.", correct: false, feedback: "Incorrect! This creates a double comparative.", feedbackEs: "¡Incorrecto! Esto crea un doble comparativo." },
+                    { text: "The more evidence they compared, the MOST OBVIOUS the hidden connection became.", textEs: "Cuantas más pruebas comparaban, LA MÁS OBVIA se volvía la conexión oculta.", correct: false, feedback: "Incorrect! 'Most obvious' is superlative, not comparative.", feedbackEs: "¡Incorrecto! 'Most obvious' es superlativo, no comparativo." }
+                ]
+            }
+        },
+
+        chapter4Mixed3: {
+            easy: {
+                choices: [
+                    { text: "The investigators MUST CHECK the original document.", textEs: "Los investigadores DEBEN REVISAR el documento original.", correct: true, feedback: "Correct! A modal is followed by the base form.", feedbackEs: "¡Correcto! Un modal va seguido de la forma base." },
+                    { text: "The investigators MUST TO CHECK the original document.", textEs: "Los investigadores DEBEN A REVISAR el documento original.", correct: false, feedback: "Incorrect! Do not use 'to' after a modal.", feedbackEs: "¡Incorrecto! No uses 'to' después de un modal." },
+                    { text: "The investigators MUST CHECKING the original document.", textEs: "Los investigadores DEBEN REVISANDO el documento original.", correct: false, feedback: "Incorrect! The modal requires the base form.", feedbackEs: "¡Incorrecto! El modal requiere la forma base." }
+                ]
+            },
+            medium: {
+                choices: [
+                    { text: "Ranpo said that the culprit MUST HAVE KNOWN about the cipher.", textEs: "Ranpo dijo que el culpable DEBÍA HABER SABIDO sobre el cifrado.", correct: true, feedback: "Correct! 'Must have + past participle' expresses a strong past deduction.", feedbackEs: "¡Correcto! 'Must have + participio pasado' expresa una deducción pasada fuerte." },
+                    { text: "Ranpo said that the culprit MUST HAS KNOWN about the cipher.", textEs: "Ranpo dijo que el culpable DEBE HA SABIDO sobre el cifrado.", correct: false, feedback: "Incorrect! After 'must', use the base form 'have'.", feedbackEs: "¡Incorrecto! Después de 'must', usa la forma base 'have'." },
+                    { text: "Ranpo said that the culprit MUST HAD KNOWN about the cipher.", textEs: "Ranpo dijo que el culpable DEBE HABÍA SABIDO sobre el cifrado.", correct: false, feedback: "Incorrect! A modal cannot be followed by 'had'.", feedbackEs: "¡Incorrecto! Un modal no puede ir seguido de 'had'." }
+                ]
+            },
+            hard: {
+                choices: [
+                    { text: "The culprit MUST HAVE MANIPULATED the evidence before the investigation began.", textEs: "El culpable DEBE HABER MANIPULADO la evidencia antes de que comenzara la investigación.", correct: true, feedback: "Correct! This expresses a strong deduction about a past event.", feedbackEs: "¡Correcto! Esto expresa una deducción fuerte sobre un evento pasado." },
+                    { text: "The culprit MUST HAS MANIPULATED the evidence before the investigation began.", textEs: "El culpable DEBE HA MANIPULADO la evidencia antes de que comenzara la investigación.", correct: false, feedback: "Incorrect! Modal verbs require the base form 'have'.", feedbackEs: "¡Incorrecto! Los verbos modales requieren la forma base 'have'." },
+                    { text: "The culprit MUST HAD MANIPULATED the evidence before the investigation began.", textEs: "El culpable DEBE HABÍA MANIPULADO la evidencia antes de que comenzara la investigación.", correct: false, feedback: "Incorrect! 'Must' cannot be followed by 'had'.", feedbackEs: "¡Incorrecto! 'Must' no puede ir seguido de 'had'." }
+                ]
+            }
+        },
+
+        chapter4Final: {
+            easy: {
+                choices: [
+                    { text: "While the detectives WERE REVIEWING the evidence, they FOUND the final clue.", textEs: "Mientras los detectives ESTABAN REVISANDO la evidencia, ENCONTRARON la pista final.", correct: true, feedback: "Correct! Past continuous + past simple form a logical timeline.", feedbackEs: "¡Correcto! Pasado continuo + pasado simple forman una línea temporal lógica." },
+                    { text: "While the detectives WAS REVIEWING the evidence, they FIND the final clue.", textEs: "Mientras los detectives ESTABA REVISANDO la evidencia, ENCUENTRAN la pista final.", correct: false, feedback: "Incorrect! Both subject agreement and tense are wrong.", feedbackEs: "¡Incorrecto! Tanto la concordancia del sujeto como el tiempo están mal." },
+                    { text: "While the detectives WERE REVIEW the evidence, they FOUND the final clue.", textEs: "Mientras los detectives ESTABAN REVISAR la evidencia, ENCONTRARON la pista final.", correct: false, feedback: "Incorrect! Past continuous requires the -ing form.", feedbackEs: "¡Incorrecto! El pasado continuo requiere la forma -ing." }
+                ]
+            },
+            medium: {
+                choices: [
+                    { text: "The more carefully Ranpo analyzed the cipher, the CLEARER the hidden pattern became, and he MUST HAVE FOUND the connection.", textEs: "Cuanto más cuidadosamente analizaba Ranpo el cifrado, MÁS CLARO se volvía el patrón oculto, y DEBÍA HABER ENCONTRADO la conexión.", correct: true, feedback: "Correct! The sentence combines comparatives, past simple, and past modal deduction.", feedbackEs: "¡Correcto! La oración combina comparativos, pasado simple y deducción modal pasada." },
+                    { text: "The more carefully Ranpo ANALYZE the cipher, the MORE CLEARER the hidden pattern became, and he MUST HAS FOUND the connection.", textEs: "Cuanto más cuidadosamente Ranpo ANALIZA el cifrado, MÁS MÁS CLARO se volvía el patrón oculto, y DEBE HA ENCONTRADO la conexión.", correct: false, feedback: "Incorrect! Multiple grammatical structures are wrong.", feedbackEs: "¡Incorrecto! Múltiples estructuras gramaticales están mal." },
+                    { text: "The more carefully Ranpo WAS ANALYZED the cipher, the CLEARLY the pattern became, and he MUST HAD FOUND the connection.", textEs: "Cuanto más cuidadosamente Ranpo FUE ANALIZADO el cifrado, CLARAMENTE se volvía el patrón, y DEBE HABÍA ENCONTRADO la conexión.", correct: false, feedback: "Incorrect! The sentence contains incorrect voice, comparative, and modal structures.", feedbackEs: "¡Incorrecto! La oración contiene voz, comparativo y estructuras modales incorrectas." }
+                ]
+            },
+            hard: {
+                choices: [
+                    { text: "Had Poe not recognized the Guild's writing style, Ranpo WOULD HAVE MISSED the connection, but the evidence WAS CLEARER than expected and they MUST HAVE REALIZED who had manipulated the trail.", textEs: "Si Poe no hubiera reconocido el estilo de escritura del Gremio, Ranpo HABRÍA PERDIDO la conexión, pero la evidencia ERA MÁS CLARA de lo esperado y DEBÍAN HABERSE DADO CUENTA de quién había manipulado el rastro.", correct: true, feedback: "Correct! This combines an inverted conditional, modal deduction, comparatives, and past forms.", feedbackEs: "¡Correcto! Esto combina un condicional invertido, deducción modal, comparativos y formas pasadas." },
+                    { text: "Had Poe not recognized the Guild's writing style, Ranpo WOULD HAS MISSED the connection, but the evidence was MORE CLEARER than expected.", textEs: "Si Poe no hubiera reconocido el estilo de escritura del Gremio, Ranpo HABRÍA PERDIDO la conexión, pero la evidencia era MÁS MÁS CLARA de lo esperado.", correct: false, feedback: "Incorrect! 'Would' requires 'have', and 'more clearer' is a double comparative.", feedbackEs: "¡Incorrecto! 'Would' requiere 'have', y 'more clearer' es un doble comparativo." },
+                    { text: "Had Poe not recognized the Guild's writing style, Ranpo WILL MISSED the connection, but the evidence CLEARLY was and he MUST HAD REALIZED it.", textEs: "Si Poe no hubiera reconocido el estilo de escritura del Gremio, Ranpo PERDERÁ la conexión, pero la evidencia CLARAMENTE era y DEBE HABÍA DADO CUENTA de ello.", correct: false, feedback: "Incorrect! Several structures are grammatically incorrect.", feedbackEs: "¡Incorrecto! Varias estructuras son gramaticalmente incorrectas." }
+                ]
+            }
+        }
+    };
+
+    /* =========================================================
+       STORY FLOW — CON TRADUCCIÓN EN DIÁLOGOS
+    ========================================================= */
+    const storyFlow = [
+
+        /* CHAPTER I — THE GUILD */
+        { type: "chapter", chapter: 1, number: "I", title: "THE GUILD", subtitle: "A familiar enemy. An unfamiliar cipher." },
+
+        { bg: ASSETS.bgGuildOffice, speaker: "KUNIKIDA", sprite: ASSETS.kunikida, text: "Listen closely, rookie! An encrypted cipher from the Guild was intercepted in Yokohama.", textEs: "¡Escucha con atención, novato! Interceptamos en Yokohama un cifrado encriptado del Gremio." },
+        { bg: ASSETS.bgGuildOffice, speaker: "FRANCIS FITZGERALD", sprite: ASSETS.francis, text: "Not from the Guild. It uses our archival format, but no Guild authorization produced this cipher.", textEs: "No es del Gremio. Usa nuestro formato de archivo, pero ninguna autorización del Gremio produjo este cifrado." },
+        { bg: ASSETS.bgGuildOffice, speaker: "FRANCIS FITZGERALD", sprite: ASSETS.francis, text: "Someone copied a real Guild record closely enough to make you look at us first.", textEs: "Alguien copió un registro real del Gremio lo bastante bien como para que nos miraran primero a nosotros." },
+        { bg: ASSETS.bgGuildOffice, speaker: "DAZAI", sprite: ASSETS.dazai, text: "Relax, Kunikida~ Yesterday, when the cipher arrived, all of us WERE analyzing it... well, mostly you.", textEs: "Relájate, Kunikida~ Ayer, cuando llegó el cifrado, todos ESTÁBAMOS analizándolo... bueno, mayormente tú." },
+        { bg: ASSETS.bgGuildOffice, speaker: "KUNIKIDA", sprite: ASSETS.kunikida, text: "Stop slacking! The cipher contains several grammatical patterns. We need to understand them before we can decipher the first clue.", textEs: "¡Deja de holgazanear! El cifrado contiene varios patrones gramaticales. Necesitamos entenderlos antes de descifrar la primera pista." },
+        { bg: ASSETS.bgGuildOffice, speaker: "POE", sprite: ASSETS.poe, text: "Wait. Let me see that.", textEs: "Espera. Déjame ver eso." },
+        { bg: ASSETS.bgGuildOffice, speaker: "DAZAI", sprite: ASSETS.dazai, text: "Oh? Poe looks unusually serious.", textEs: "¿Oh? Poe parece inusualmente serio." },
+        { bg: ASSETS.bgGuildOffice, speaker: "POE", sprite: ASSETS.poe, text: "This construction is genuine Guild style. But Francis is right: it is a copy, not an original order.", textEs: "Esta construcción es del estilo auténtico del Gremio. Pero Francis tiene razón: es una copia, no una orden original." },
+        { bg: ASSETS.bgGuildOffice, speaker: "KUNIKIDA", sprite: ASSETS.kunikida, text: "Then our first assumption is that the Guild sent it.", textEs: "Entonces nuestra primera suposición es que el Gremio lo envió." },
+        { bg: ASSETS.bgGuildOffice, speaker: "POE", sprite: ASSETS.poe, text: "Our first assumption, yes. But not necessarily the correct one.", textEs: "Nuestra primera suposición, sí. Pero no necesariamente la correcta." },
+
+        { type: "question", key: "verbToBe", prompt: "Identify the correct past form of the verb 'To Be':" },
+
+        { bg: ASSETS.bgRainyCity, speaker: "ATSUSHI", sprite: ASSETS.atsushi, text: "Great job! That lead brought us right into the foggy, rainy docks of Yokohama.", textEs: "¡Buen trabajo! Esa pista nos llevó directo a los muelles brumosos y lluviosos de Yokohama." },
+        { bg: ASSETS.bgRainyCity, speaker: "DAZAI", sprite: ASSETS.dazai, text: "Notice how this case is getting HARDER than expected? Precision with comparatives keeps us alive.", textEs: "¿Notas cómo este caso se está volviendo MÁS DIFÍCIL de lo esperado? La precisión con los comparativos nos mantiene vivos." },
+        { bg: ASSETS.bgRainyCity, speaker: "POE", sprite: ASSETS.poe, text: "There is something strange about these clues. They look like Guild information, but whoever created them expected us to recognize that.", textEs: "Hay algo extraño en estas pistas. Parecen información del Gremio, pero quien las creó esperaba que reconociéramos eso." },
+
+        { type: "question", key: "comparatives", prompt: "Select the grammatically correct comparative structure:" },
+
+        { bg: ASSETS.bgGuildVault, speaker: "KUNIKIDA", sprite: ASSETS.kunikida, text: "We've reached the vault entrance! Someone RAN past the perimeter security moments ago.", textEs: "¡Hemos llegado a la entrada de la bóveda! Alguien CORRIÓ más allá de la seguridad perimetral hace unos momentos." },
+        { bg: ASSETS.bgGuildVault, speaker: "ATSUSHI", sprite: ASSETS.atsushi, text: "We need to document single completed actions accurately without confusing the timeline.", textEs: "Necesitamos documentar acciones únicas completadas con precisión sin confundir la línea temporal." },
+
+        { type: "question", key: "pastSimple", prompt: "Choose the correct Past Simple verb form:" },
+
+        { bg: ASSETS.bgGuildVault, speaker: "ATSUSHI", sprite: ASSETS.atsushi, text: "Look at the terminal! While we WERE SEARCHING the outer corridor, an unauthorized override occurred.", textEs: "¡Mira la terminal! Mientras ESTÁBAMOS BUSCANDO en el corredor exterior, ocurrió una anulación no autorizada." },
+
+        { type: "question", key: "pastContinuous", prompt: "Identify the sentence using correct Past Continuous tense:" },
+
+        { bg: ASSETS.bgAlley, speaker: "RANPO", sprite: ASSETS.ranpo, text: "Hmm! Ultra Deduction time! The culprit MUST HAVE KNOWN the access code beforehand.", textEs: "¡Hmm! ¡Hora de la Ultra Deducción! El culpable DEBÍA HABER SABIDO el código de acceso de antemano." },
+        { bg: ASSETS.bgAlley, speaker: "POE", sprite: ASSETS.poe, text: "Ranpo, if the Guild really sent the cipher, why would they leave evidence this obvious?", textEs: "Ranpo, si el Gremio realmente envió el cifrado, ¿por qué dejarían evidencia tan obvia?" },
+        { bg: ASSETS.bgAlley, speaker: "RANPO", sprite: ASSETS.ranpo, text: "Exactly. Someone wants us to think the Guild is responsible.", textEs: "Exacto. Alguien quiere que pensemos que el Gremio es responsable." },
+
+        { type: "question", key: "modals", prompt: "Select the sentence with proper Modal Verb usage:" },
+
+        { bg: ASSETS.bgAlley, speaker: "POE", sprite: ASSETS.poe, text: "I found another section of the cipher. It contains a conditional statement.", textEs: "Encontré otra sección del cifrado. Contiene una declaración condicional." },
+        { bg: ASSETS.bgAlley, speaker: "RANPO", sprite: ASSETS.ranpo, text: "Good. Conditional structures can tell us whether the writer was describing reality or a hypothetical situation.", textEs: "Bien. Las estructuras condicionales pueden decirnos si el escritor describía la realidad o una situación hipotética." },
+        { bg: ASSETS.bgAlley, speaker: "POE", sprite: ASSETS.poe, text: "If I had not recognized the writing style, we might never have connected this document to the Guild.", textEs: "Si no hubiera reconocido el estilo de escritura, quizás nunca habríamos conectado este documento con el Gremio." },
+        { bg: ASSETS.bgAlley, speaker: "RANPO", sprite: ASSETS.ranpo, text: "And that is exactly why we need to examine the grammar as carefully as the evidence.", textEs: "Y es exactamente por eso que necesitamos examinar la gramática tan cuidadosamente como la evidencia." },
+
+        { type: "question", key: "poeRanpo", prompt: "POE + RANPO — Choose the correct conditional construction:" },
+
+        { bg: ASSETS.bgRainyCity, speaker: "ATSUSHI", sprite: ASSETS.atsushi, text: "I found someone who was carrying a copy of the cipher near the docks.", textEs: "Encontré a alguien que llevaba una copia del cifrado cerca de los muelles." },
+        { bg: ASSETS.bgRainyCity, speaker: "LUCY", sprite: ASSETS.lucy, text: "And I found something else. This page was hidden inside an old Guild document.", textEs: "Y yo encontré algo más. Esta página estaba escondida dentro de un viejo documento del Gremio." },
+        { bg: ASSETS.bgRainyCity, speaker: "ATSUSHI", sprite: ASSETS.atsushi, text: "So you found it before I did?", textEs: "¿Entonces lo encontraste antes que yo?" },
+        { bg: ASSETS.bgRainyCity, speaker: "LUCY", sprite: ASSETS.lucy, text: "Obviously. Someone had to actually look carefully.", textEs: "Obviamente. Alguien tenía que mirar cuidadosamente de verdad." },
+        { bg: ASSETS.bgRainyCity, speaker: "ATSUSHI", sprite: ASSETS.atsushi, text: "Lucy said that she had found the document before we arrived.", textEs: "Lucy dijo que ella había encontrado el documento antes de que llegáramos." },
+        { bg: ASSETS.bgRainyCity, speaker: "LUCY", sprite: ASSETS.lucy, text: "And the symbol on it doesn't match the other Guild records.", textEs: "Y el símbolo en él no coincide con los otros registros del Gremio." },
+
+        { type: "question", key: "atsushiLucy", prompt: "ATSUSHI + LUCY — Identify the correct relative clause or reported speech:" },
+
+        { bg: ASSETS.bgOffice, speaker: "POE", sprite: ASSETS.poe, text: "I compared the cipher with several Guild documents. The structure is genuine.", textEs: "Comparé el cifrado con varios documentos del Gremio. La estructura es genuina." },
+        { bg: ASSETS.bgOffice, speaker: "FRANCIS FITZGERALD", sprite: ASSETS.francis, text: "The Guild spent years investigating the Book. I wanted to revive my deceased daughter and restore my family.", textEs: "El Gremio pasó años investigando el Libro. Yo quería revivir a mi hija fallecida y restaurar a mi familia." },
+        { bg: ASSETS.bgOffice, speaker: "POE", sprite: ASSETS.poe, text: "So the forged cipher is using a true Guild investigation as camouflage.", textEs: "Entonces el cifrado falsificado usa una investigación real del Gremio como camuflaje." },
+        { bg: ASSETS.bgOffice, speaker: "RANPO", sprite: ASSETS.ranpo, text: "Ultra Deduction. I knew it.", textEs: "Ultra Deducción. Lo sabía." },
+        { bg: ASSETS.bgOffice, speaker: "RANPO", sprite: ASSETS.ranpo, text: "The clues were never meant to lead to the Guild itself.", textEs: "Las pistas nunca tuvieron la intención de llevarnos al Gremio en sí." },
+        { bg: ASSETS.bgOffice, speaker: "RANPO", sprite: ASSETS.ranpo, text: "They were leading somewhere the Guild had investigated.", textEs: "Nos llevaban a un lugar que el Gremio había investigado." },
+        { bg: ASSETS.bgOffice, speaker: "POE", sprite: ASSETS.poe, text: "Where?", textEs: "¿Dónde?" },
+        { bg: ASSETS.bgOffice, speaker: "RANPO", sprite: ASSETS.ranpo, text: "The Book.", textEs: "El Libro." },
+
+        { type: "chapterEnd", chapter: 1 },
+
+        /* CHAPTER II — THE BOOK */
+        { type: "chapter", chapter: 2, number: "II", title: "THE BOOK", subtitle: "A real Guild file reveals who forged the first clue." },
+
+        { bg: ASSETS.bgLibrary, speaker: "POE", sprite: ASSETS.poe, text: "There is something I should have told you. Francis recovered the original Guild ledger.", textEs: "Hay algo que debería haberte dicho. Francis recuperó el registro original del Gremio." },
+        { bg: ASSETS.bgLibrary, speaker: "RANPO", sprite: ASSETS.ranpo, text: "I already know.", textEs: "Ya lo sé." },
+        { bg: ASSETS.bgLibrary, speaker: "FRANCIS FITZGERALD", sprite: ASSETS.francis, text: "The ledger proves the Guild searched for the Book. It also proves our report was copied after it was sealed.", textEs: "El registro prueba que el Gremio buscó el Libro. También prueba que nuestro informe fue copiado después de ser sellado." },
+        { bg: ASSETS.bgLibrary, speaker: "RANPO", sprite: ASSETS.ranpo, text: "As I thought...", textEs: "Como pensaba..." },
+        { bg: ASSETS.bgLibrary, speaker: "POE", sprite: ASSETS.poe, text: "Yes. Do you know who else was interested?", textEs: "Sí. ¿Sabes quién más estaba interesado?" },
+        { bg: ASSETS.bgLibrary, speaker: "KUNIKIDA", sprite: ASSETS.kunikida, text: "The Rats.", textEs: "Las Ratas." },
+        { bg: ASSETS.bgLibrary, speaker: "POE", sprite: ASSETS.poe, text: "The Guild never sent the Rats our complete report. Someone extracted one page and delivered an edited version.", textEs: "El Gremio nunca envió a las Ratas nuestro informe completo. Alguien extrajo una página y entregó una versión editada." },
+        { bg: ASSETS.bgLibrary, speaker: "DAZAI", sprite: ASSETS.dazai, text: "So the Guild wasn't the destination.", textEs: "Entonces el Gremio no era el destino." },
+        { bg: ASSETS.bgLibrary, speaker: "RANPO", sprite: ASSETS.ranpo, text: "Exactly. It was another piece.", textEs: "Exacto. Era otra pieza." },
+
+        { type: "caseChoice", key: "chapter3Guild", prompt: "CASE ANALYSIS I — What does the Guild evidence actually prove?", choices: questionBank.chapter3Guild.easy.choices },
+
+        { bg: ASSETS.bgVault, speaker: "FRANCIS FITZGERALD", sprite: ASSETS.francis, text: "This is the sealed original. The missing page contains a route reference the Guild never followed.", textEs: "Este es el original sellado. La página faltante contiene una referencia a una ruta que el Gremio nunca siguió." },
+        { bg: ASSETS.bgVault, speaker: "RANPO", sprite: ASSETS.ranpo, text: "So the forger did not just steal information. They edited it to create the next step of our investigation.", textEs: "Entonces el falsificador no solo robó información. La editó para crear el siguiente paso de nuestra investigación." },
+        { bg: ASSETS.bgVault, speaker: "POE", sprite: ASSETS.poe, text: "The route reference appears again in a Port Mafia archive. That is where we verify who received it.", textEs: "La referencia de la ruta aparece otra vez en un archivo de la Mafia del Puerto. Ahí verificaremos quién la recibió." },
+
+        { bg: ASSETS.bgArchive, speaker: "ATSUSHI", sprite: ASSETS.atsushi, text: "Then we need another source of evidence.", textEs: "Entonces necesitamos otra fuente de evidencia." },
+        { bg: ASSETS.bgArchive, speaker: "KUNIKIDA", sprite: ASSETS.kunikida, text: "The Port Mafia.", textEs: "La Mafia del Puerto." },
+        { bg: ASSETS.bgArchive, speaker: "DAZAI", sprite: ASSETS.dazai, text: "Oh, wonderful. Just when I thought this case couldn't become more complicated.", textEs: "Oh, maravilloso. Justo cuando pensaba que este caso no podía volverse más complicado." },
+        { bg: ASSETS.bgArchive, speaker: "RANPO", sprite: ASSETS.ranpo, text: "Their records confirm it. The Rats received the edited page two days after the Guild sealed the original.", textEs: "Sus registros lo confirman. Las Ratas recibieron la página editada dos días después de que el Gremio sellara el original." },
+        { bg: ASSETS.bgArchive, speaker: "POE", sprite: ASSETS.poe, text: "Then both organizations were following the same objective.", textEs: "Entonces ambas organizaciones seguían el mismo objetivo." },
+        { bg: ASSETS.bgArchive, speaker: "RANPO", sprite: ASSETS.ranpo, text: "Not quite. Look at the dates.", textEs: "No exactamente. Mira las fechas." },
+        { bg: ASSETS.bgArchive, speaker: "ATSUSHI", sprite: ASSETS.atsushi, text: "The Guild's records came first.", textEs: "Los registros del Gremio vinieron primero." },
+        { bg: ASSETS.bgArchive, speaker: "KUNIKIDA", sprite: ASSETS.kunikida, text: "And the Rats received information afterward.", textEs: "Y las Ratas recibieron información después." },
+        { bg: ASSETS.bgArchive, speaker: "RANPO", sprite: ASSETS.ranpo, text: "Exactly. Someone stole a Guild page, altered the route, and made sure the Rats followed it.", textEs: "Exacto. Alguien robó una página del Gremio, alteró la ruta y se aseguró de que las Ratas la siguieran." },
+
+        { type: "caseChoice", key: "chapter3Connection", prompt: "CASE ANALYSIS II — Which connection best matches the evidence?", choices: questionBank.chapter3Connection.easy.choices },
+
+        { bg: ASSETS.bgRatsHideout, speaker: "ARCHIVED RECORDING", text: "You finally understand.", textEs: "Por fin entienden." },
+        { bg: ASSETS.bgRatsHideout, speaker: "DAZAI", sprite: ASSETS.dazai, text: "A recording? Whoever left this expected us to find it.", textEs: "¿Una grabación? Quien la dejó esperaba que la encontráramos." },
+        { bg: ASSETS.bgRatsHideout, speaker: "ARCHIVED RECORDING", text: "The Guild had information. The Rats had information. The Mafia had information.", textEs: "El Gremio tenía información. Las Ratas tenían información. La Mafia tenía información." },
+        { bg: ASSETS.bgRatsHideout, speaker: "ARCHIVED RECORDING", text: "All that remained was to ensure that everyone looked in the correct direction.", textEs: "Solo quedaba asegurarse de que todos miraran en la dirección correcta." },
+        { bg: ASSETS.bgRatsHideout, speaker: "POE", sprite: ASSETS.poe, text: "Then the clues weren't simply being discovered. They were being arranged.", textEs: "Entonces las pistas no solo se estaban descubriendo. Estaban siendo colocadas." },
+        { bg: ASSETS.bgRatsHideout, speaker: "RANPO", sprite: ASSETS.ranpo, text: "Now you're getting it.", textEs: "Ahora lo estás entendiendo." },
+        { bg: ASSETS.bgRatsHideout, speaker: "ATSUSHI", sprite: ASSETS.atsushi, text: "The Guild led us to the Book. The Book led us to the Rats. The Rats led us somewhere else.", textEs: "El Gremio nos llevó al Libro. El Libro nos llevó a las Ratas. Las Ratas nos llevaron a otro lugar." },
+        { bg: ASSETS.bgRatsHideout, speaker: "RANPO", sprite: ASSETS.ranpo, text: "And eventually, all those trails led us here.", textEs: "Y eventualmente, todos esos rastros nos trajeron aquí." },
+        { bg: ASSETS.bgRatsHideout, speaker: "POE", sprite: ASSETS.poe, text: "A prison called Meursault.", textEs: "Una prisión llamada Meursault." },
+        { bg: ASSETS.bgRatsHideout, speaker: "RANPO", sprite: ASSETS.ranpo, text: "Maybe. It is a destination, not yet an answer.", textEs: "Tal vez. Es un destino, todavía no una respuesta." },
+
+        { type: "caseChoice", key: "chapter3Trail", prompt: "CASE ANALYSIS III — What conclusion explains the entire trail?", choices: questionBank.chapter3Trail.easy.choices },
+
+        { bg: ASSETS.bgOffice, speaker: "POE", sprite: ASSETS.poe, text: "So the cipher wasn't just hiding information.", textEs: "Entonces el cifrado no solo estaba escondiendo información." },
+        { bg: ASSETS.bgOffice, speaker: "RANPO", sprite: ASSETS.ranpo, text: "No. It was controlling where we looked for that information.", textEs: "No. Estaba controlando dónde buscábamos esa información." },
+        { bg: ASSETS.bgOffice, speaker: "DAZAI", sprite: ASSETS.dazai, text: "Which means someone predicted how every organization would react.", textEs: "Lo que significa que alguien predijo cómo reaccionaría cada organización." },
+        { bg: ASSETS.bgOffice, speaker: "KUNIKIDA", sprite: ASSETS.kunikida, text: "The Guild. The Rats. The Mafia. Even us.", textEs: "El Gremio. Las Ratas. La Mafia. Incluso nosotros." },
+        { bg: ASSETS.bgOffice, speaker: "ATSUSHI", sprite: ASSETS.atsushi, text: "Then the person behind this wanted us to reach a specific place.", textEs: "Entonces la persona detrás de esto quería que llegáramos a un lugar específico." },
+        { bg: ASSETS.bgOffice, speaker: "RANPO", sprite: ASSETS.ranpo, text: "Yes.", textEs: "Sí." },
+        { bg: ASSETS.bgOffice, speaker: "POE", sprite: ASSETS.poe, text: "And we're not there yet.", textEs: "Y todavía no estamos ahí." },
+        { bg: ASSETS.bgOffice, speaker: "RANPO", sprite: ASSETS.ranpo, text: "No. But now we know what we're looking for.", textEs: "No. Pero ahora sabemos qué estamos buscando." },
+        { bg: ASSETS.bgOffice, speaker: "RANPO", sprite: ASSETS.ranpo, text: "The person who designed the trail.", textEs: "La persona que diseñó el rastro." },
+
+        { type: "chapterEnd", chapter: 2 },
+
+        /* CHAPTER III — THE LAST CLUE (antes de Meursault) */
+        { type: "chapter", chapter: 3, number: "III", title: "THE LAST CLUE", subtitle: "The answer was hidden in the evidence." },
+
+        { bg: ASSETS.bgEvidenceRoom, speaker: "ATSUSHI", sprite: ASSETS.atsushi, text: "I went through the Guild documents again. Something doesn't add up.", textEs: "Revisé los documentos del Gremio otra vez. Algo no cuadra." },
+        { bg: ASSETS.bgEvidenceRoom, speaker: "LUCY", sprite: ASSETS.lucy, text: "The dates?", textEs: "¿Las fechas?" },
+        { bg: ASSETS.bgEvidenceRoom, speaker: "ATSUSHI", sprite: ASSETS.atsushi, text: "Exactly. The Guild document existed before the cipher was supposedly created.", textEs: "Exacto. El documento del Gremio existía antes de que supuestamente se creara el cifrado." },
+        { bg: ASSETS.bgEvidenceRoom, speaker: "LUCY", sprite: ASSETS.lucy, text: "Then someone copied the Guild's writing style.", textEs: "Entonces alguien copió el estilo de escritura del Gremio." },
+        { bg: ASSETS.bgEvidenceRoom, speaker: "FRANCIS FITZGERALD", sprite: ASSETS.francis, text: "Every authentic Guild archive carries a second ledger mark. This cipher copied the visible style, but not the internal record.", textEs: "Cada archivo auténtico del Gremio lleva una segunda marca de registro. Este cifrado copió el estilo visible, pero no el registro interno." },
+        { bg: ASSETS.bgEvidenceRoom, speaker: "POE", sprite: ASSETS.poe, text: "That means the forger studied the Guild from the outside — and had access to the files we thought were stolen.", textEs: "Eso significa que el falsificador estudió al Gremio desde afuera — y tenía acceso a los archivos que creíamos robados." },
+        { bg: ASSETS.bgEvidenceRoom, speaker: "ATSUSHI", sprite: ASSETS.atsushi, text: "While we WERE READING the report, Lucy found the missing page.", textEs: "Mientras ESTÁBAMOS LEYENDO el informe, Lucy encontró la página faltante." },
+
+        { type: "question", key: "chapter4Mixed1", prompt: "CHAPTER III — EVIDENCE ANALYSIS I: Choose the correct tense combination:" },
+
+        { bg: ASSETS.bgConspiracyBoard, speaker: "POE", sprite: ASSETS.poe, text: "I have compared the original cipher with the Guild documents.", textEs: "He comparado el cifrado original con los documentos del Gremio." },
+        { bg: ASSETS.bgConspiracyBoard, speaker: "RANPO", sprite: ASSETS.ranpo, text: "And?", textEs: "¿Y?" },
+        { bg: ASSETS.bgConspiracyBoard, speaker: "POE", sprite: ASSETS.poe, text: "The imitation is extremely convincing. Whoever created it understood the Guild's writing style.", textEs: "La imitación es extremadamente convincente. Quien la creó entendía el estilo de escritura del Gremio." },
+        { bg: ASSETS.bgConspiracyBoard, speaker: "RANPO", sprite: ASSETS.ranpo, text: "But not perfectly.", textEs: "Pero no perfectamente." },
+        { bg: ASSETS.bgConspiracyBoard, speaker: "POE", sprite: ASSETS.poe, text: "No. There is one difference.", textEs: "No. Hay una diferencia." },
+        { bg: ASSETS.bgConspiracyBoard, speaker: "RANPO", sprite: ASSETS.ranpo, text: "The more carefully we examine the cipher, the clearer the pattern becomes.", textEs: "Cuanto más cuidadosamente examinamos el cifrado, más claro se vuelve el patrón." },
+
+        { type: "question", key: "chapter4Mixed2", prompt: "CHAPTER III — EVIDENCE ANALYSIS II: Select the correct comparative structure:" },
+
+        { bg: ASSETS.bgOffice, speaker: "ATSUSHI", sprite: ASSETS.atsushi, text: "The Guild, the Rats and the Mafia all received different pieces of information.", textEs: "El Gremio, las Ratas y la Mafia recibieron todos diferentes piezas de información." },
+        { bg: ASSETS.bgOffice, speaker: "LUCY", sprite: ASSETS.lucy, text: "But the pieces all pointed toward the same conclusion.", textEs: "Pero las piezas apuntaban todas hacia la misma conclusión." },
+        { bg: ASSETS.bgOffice, speaker: "ATSUSHI", sprite: ASSETS.atsushi, text: "Someone wanted every organization to investigate the same mystery.", textEs: "Alguien quería que cada organización investigara el mismo misterio." },
+        { bg: ASSETS.bgOffice, speaker: "LUCY", sprite: ASSETS.lucy, text: "And if someone had been controlling the trail from the beginning...", textEs: "Y si alguien había estado controlando el rastro desde el principio..." },
+        { bg: ASSETS.bgOffice, speaker: "ATSUSHI", sprite: ASSETS.atsushi, text: "Then they MUST HAVE KNOWN exactly where the evidence would lead.", textEs: "Entonces DEBÍAN HABER SABIDO exactamente a dónde llevaría la evidencia." },
+
+        { type: "question", key: "chapter4Mixed3", prompt: "CHAPTER III — EVIDENCE ANALYSIS III: Choose the correct modal construction:" },
+
+        { bg: ASSETS.bgOffice, speaker: "POE", sprite: ASSETS.poe, text: "Ranpo... I think I finally understand why you kept asking me about the Guild documents.", textEs: "Ranpo... creo que finalmente entiendo por qué seguías preguntándome sobre los documentos del Gremio." },
+        { bg: ASSETS.bgOffice, speaker: "RANPO", sprite: ASSETS.ranpo, text: "Because you were the one person who could recognize the imitation.", textEs: "Porque eras la única persona que podía reconocer la imitación." },
+        { bg: ASSETS.bgOffice, speaker: "POE", sprite: ASSETS.poe, text: "The cipher wasn't written by the Guild.", textEs: "El cifrado no fue escrito por el Gremio." },
+        { bg: ASSETS.bgOffice, speaker: "RANPO", sprite: ASSETS.ranpo, text: "No.", textEs: "No." },
+        { bg: ASSETS.bgOffice, speaker: "POE", sprite: ASSETS.poe, text: "But it was written to look like the Guild had written it.", textEs: "Pero fue escrito para que pareciera que el Gremio lo había escrito." },
+        { bg: ASSETS.bgOffice, speaker: "RANPO", sprite: ASSETS.ranpo, text: "Exactly.", textEs: "Exacto." },
+        { bg: ASSETS.bgOffice, speaker: "POE", sprite: ASSETS.poe, text: "And the information about the Book was used to connect the Guild to the Rats.", textEs: "Y la información sobre el Libro se usó para conectar al Gremio con las Ratas." },
+        { bg: ASSETS.bgOffice, speaker: "RANPO", sprite: ASSETS.ranpo, text: "Which connected them to the Mafia.", textEs: "Lo que los conectó con la Mafia." },
+        { bg: ASSETS.bgOffice, speaker: "POE", sprite: ASSETS.poe, text: "Which eventually led us to Meursault.", textEs: "Lo que eventualmente nos llevó a Meursault." },
+        { bg: ASSETS.bgOffice, speaker: "RANPO", sprite: ASSETS.ranpo, text: "And Meursault led us exactly where someone wanted us to go.", textEs: "Y Meursault nos llevó exactamente a donde alguien quería que fuéramos." },
+        { bg: ASSETS.bgOffice, speaker: "DAZAI", sprite: ASSETS.dazai, text: "So the entire investigation was constructed.", textEs: "Entonces toda la investigación fue construida." },
+        { bg: ASSETS.bgOffice, speaker: "RANPO", sprite: ASSETS.ranpo, text: "Yes.", textEs: "Sí." },
+        { bg: ASSETS.bgOffice, speaker: "POE", sprite: ASSETS.poe, text: "Then the real culprit wasn't any of the organizations we investigated.", textEs: "Entonces el verdadero culpable no era ninguna de las organizaciones que investigamos." },
+        { bg: ASSETS.bgOffice, speaker: "RANPO", sprite: ASSETS.ranpo, text: "Correct.", textEs: "Correcto." },
+        { bg: ASSETS.bgOffice, speaker: "DAZAI", sprite: ASSETS.dazai, text: "And the person behind the trail...", textEs: "Y la persona detrás del rastro..." },
+        { bg: ASSETS.bgOffice, speaker: "RANPO", sprite: ASSETS.ranpo, text: "Was manipulating everyone from the beginning.", textEs: "Estaba manipulando a todos desde el principio." },
+        { bg: ASSETS.bgOffice, speaker: "POE", sprite: ASSETS.poe, text: "Then we finally know what this case was really about.", textEs: "Entonces finalmente sabemos de qué se trataba realmente este caso." },
+        { bg: ASSETS.bgOffice, speaker: "RANPO", sprite: ASSETS.ranpo, text: "Not who committed the crime.", textEs: "No de quién cometió el crimen." },
+        { bg: ASSETS.bgOffice, speaker: "RANPO", sprite: ASSETS.ranpo, text: "But who wanted us to solve it.", textEs: "Sino de quién quería que lo resolviéramos." },
+        { bg: ASSETS.bgOffice, speaker: "FRANCIS FITZGERALD", sprite: ASSETS.francis, text: "The missing ledger mark appears in one other Guild report: the file on a Decay of the Angel breach.", textEs: "La marca de registro faltante aparece en otro informe del Gremio: el archivo sobre una infiltración de Decay of the Angel." },
+        { bg: ASSETS.bgOffice, speaker: "RANPO", sprite: ASSETS.ranpo, text: "There it is. The cipher was forged with stolen Guild knowledge by the Decay of the Angel — DOA.", textEs: "Ahí está. Decay of the Angel —DOA— falsificó el cifrado usando conocimiento robado del Gremio." },
+
+        { type: "question", key: "chapter4Final", prompt: "FINAL CASE ANALYSIS — Apply everything you have learned:" },
+
+        { bg: ASSETS.bgOffice, speaker: "POE", sprite: ASSETS.poe, text: "Then the route to Meursault was not a coincidence. It is DOA's final lead.", textEs: "Entonces la ruta a Meursault no fue una coincidencia. Es la última pista de DOA." },
+        { bg: ASSETS.bgOffice, speaker: "RANPO", sprite: ASSETS.ranpo, text: "Exactly. We now know who built the trail; Meursault will tell us what they intended to do with it.", textEs: "Exacto. Ahora sabemos quién construyó el rastro; Meursault nos dirá qué pretendían hacer con él." },
+        { bg: ASSETS.bgOffice, speaker: "DAZAI", sprite: ASSETS.dazai, text: "Then that's where we go. No more following someone else's game blindly.", textEs: "Entonces ahí es adonde vamos. No seguiremos ciegamente el juego de otra persona." },
+
+        /* CHAPTER IV — MEURSAULT */
+        { type: "chapter", chapter: 4, number: "IV", title: "MEURSAULT", subtitle: "DOA's final trail ends behind five locks." },
+
+        { bg: ASSETS.bgPrisonCell, speaker: "DAZAI", sprite: ASSETS.dazai_mersault, text: "Meursault's internal archive is the last place DOA could hide an unedited copy of the route.", textEs: "El archivo interno de Meursault es el último lugar donde DOA podría ocultar una copia sin editar de la ruta." },
+        { bg: ASSETS.bgPrisonCell, speaker: "FYODOR", sprite: ASSETS.fyodor_mersault, text: "A prison is merely a structure. DOA chose it because every record here is difficult to reach.", textEs: "Una prisión es meramente una estructura. DOA la eligió porque cada registro aquí es difícil de alcanzar." },
+        { bg: ASSETS.bgPrisonCell, speaker: "DAZAI", sprite: ASSETS.dazai_mersault, text: "You always have such depressing ways of making conversation, Fyodor.", textEs: "Siempre tienes formas tan deprimentes de hacer conversación, Fyodor." },
+        { bg: ASSETS.bgPrisonCell, speaker: "FYODOR", sprite: ASSETS.fyodor_mersault, text: "And yet you continue speaking to me.", textEs: "Y sin embargo sigues hablándome." },
+        { bg: ASSETS.bgPrisonCell, speaker: "DAZAI", sprite: ASSETS.dazai_mersault, text: "Retrieve the archive first. If we leave without it, DOA's trail remains only a theory.", textEs: "Primero recuperen el archivo. Si nos vamos sin él, el rastro de DOA seguirá siendo solo una teoría." },
+
+        { bg: ASSETS.bgPrisonCorridor, speaker: "SIGMA", sprite: ASSETS.sigma_mersault, text: "Dazai! I found the archive terminal. Its security system is still active.", textEs: "¡Dazai! Encontré la terminal del archivo. Su sistema de seguridad sigue activo." },
+        { bg: ASSETS.bgPrisonCorridor, speaker: "NIKOLAI", sprite: ASSETS.nikolai_mersault, text: "And what would a secret archive be without a little theatrical flair?", textEs: "¿Y qué sería un archivo secreto sin un poco de estilo teatral?" },
+        { bg: ASSETS.bgPrisonCorridor, speaker: "SIGMA", sprite: ASSETS.sigma_mersault, text: "Nikolai, please tell me you actually have a plan.", textEs: "Nikolai, por favor dime que realmente tienes un plan." },
+        { bg: ASSETS.bgPrisonCorridor, speaker: "NIKOLAI", sprite: ASSETS.nikolai_mersault, text: "Of course I do! I always have a plan. Whether it is a good plan is another question entirely.", textEs: "¡Por supuesto que sí! Siempre tengo un plan. Si es un buen plan es otra cuestión completamente." },
+        { bg: ASSETS.bgPrisonCorridor, speaker: "DAZAI", sprite: ASSETS.dazai_mersault, text: "Perfect timing. Let's retrieve the original record.", textEs: "Momento perfecto. Recuperemos el registro original." },
+        { bg: ASSETS.bgPrisonCorridor, speaker: "FYODOR", sprite: ASSETS.fyodor_mersault, text: "How curious. You came all this way to retrieve a truth someone wanted buried.", textEs: "Qué curioso. Vinieron hasta aquí para recuperar una verdad que alguien quería enterrada." },
+        { bg: ASSETS.bgPrisonCorridor, speaker: "SIGMA", sprite: ASSETS.sigma_mersault, text: "The terminal has several layers of security. We cannot access the DOA archive directly.", textEs: "La terminal tiene varias capas de seguridad. No podemos acceder directamente al archivo de DOA." },
+        { bg: ASSETS.bgPrisonCorridor, speaker: "NIKOLAI", sprite: ASSETS.nikolai_mersault, text: "Several layers? Oh, wonderful! A locked door with personality!", textEs: "¿Varias capas? ¡Oh, maravilloso! ¡Una puerta cerrada con personalidad!" },
+        { bg: ASSETS.bgPrisonCorridor, speaker: "DAZAI", sprite: ASSETS.dazai_mersault, text: "Then our detective gets to prove the trail was constructed, one lock at a time.", textEs: "Entonces nuestro detective deberá probar que el rastro fue construido, una cerradura a la vez." },
+
+        { bg: ASSETS.bgPrisonControl, speaker: "SIGMA", sprite: ASSETS.sigma_mersault, text: "The first security layer is an identification check. We need the correct form of 'to be' to unlock it.", textEs: "La primera capa de seguridad es una verificación de identificación. Necesitamos la forma correcta de 'to be' para desbloquearla." },
+
+        { type: "question", key: "meursaultVerbToBe", prompt: "MEURSAULT LOCK I — Select the correct 'To Be' construction:" },
+
+        { bg: ASSETS.bgPrisonControl, speaker: "NIKOLAI", sprite: ASSETS.nikolai_mersault, text: "Click! One lock down. How delightfully educational.", textEs: "¡Clic! Una cerradura menos. Qué deliciosamente educativo." },
+        { bg: ASSETS.bgPrisonControl, speaker: "SIGMA", sprite: ASSETS.sigma_mersault, text: "The second layer is active. The system is comparing the complexity of each possible route.", textEs: "La segunda capa está activa. El sistema está comparando la complejidad de cada ruta posible." },
+
+        { type: "question", key: "meursaultComparatives", prompt: "MEURSAULT LOCK II — Choose the correct comparative structure:" },
+
+        { bg: ASSETS.bgPrisonControl, speaker: "DAZAI", sprite: ASSETS.dazai_mersault, text: "Another lock. Apparently Meursault has decided to become our English teacher.", textEs: "Otra cerradura. Aparentemente Meursault ha decidido convertirse en nuestro profesor de inglés." },
+        { bg: ASSETS.bgPrisonControl, speaker: "SIGMA", sprite: ASSETS.sigma_mersault, text: "The third layer is a historical activity log. We need to identify what happened.", textEs: "La tercera capa es un registro histórico de actividad. Necesitamos identificar qué sucedió." },
+
+        { type: "question", key: "meursaultPastSimple", prompt: "MEURSAULT LOCK III — Choose the correct Past Simple construction:" },
+
+        { bg: ASSETS.bgPrisonControl, speaker: "NIKOLAI", sprite: ASSETS.nikolai_mersault, text: "Three locks! We're halfway through the magnificent prison puzzle.", textEs: "¡Tres cerraduras! Estamos a mitad del magnífico rompecabezas de la prisión." },
+        { bg: ASSETS.bgPrisonControl, speaker: "FYODOR", sprite: ASSETS.fyodor_mersault, text: "The next layer records an action that was already in progress when another event occurred.", textEs: "La siguiente capa registra una acción que ya estaba en progreso cuando ocurrió otro evento." },
+        { bg: ASSETS.bgPrisonControl, speaker: "DAZAI", sprite: ASSETS.dazai_mersault, text: "In other words, past continuous. Even I can manage that.", textEs: "En otras palabras, pasado continuo. Incluso yo puedo con eso." },
+
+        { type: "question", key: "meursaultPastContinuous", prompt: "MEURSAULT LOCK IV — Identify the correct Past Continuous construction:" },
+
+        { bg: ASSETS.bgPrisonControl, speaker: "SIGMA", sprite: ASSETS.sigma_mersault, text: "The fourth lock is open. Only one standard security layer remains.", textEs: "La cuarta cerradura está abierta. Solo queda una capa de seguridad estándar." },
+        { bg: ASSETS.bgPrisonControl, speaker: "NIKOLAI", sprite: ASSETS.nikolai_mersault, text: "And naturally, the final lock demands a little authority. How appropriate!", textEs: "Y naturalmente, la cerradura final exige un poco de autoridad. ¡Qué apropiado!" },
+
+        { type: "question", key: "meursaultModals", prompt: "MEURSAULT LOCK V — Choose the correct Modal Verb construction:" },
+
+        { bg: ASSETS.bgPrisonControl, speaker: "SIGMA", sprite: ASSETS.sigma_mersault, text: "All five security layers are open. The terminal is running one final verification before releasing the archive.", textEs: "Las cinco capas de seguridad están abiertas. La terminal ejecuta una verificación final antes de liberar el archivo." },
+        { bg: ASSETS.bgPrisonControl, speaker: "FYODOR", sprite: ASSETS.fyodor_mersault, text: "Naturally. The system wants proof that the previous answers were not merely guesses.", textEs: "Naturalmente. El sistema quiere prueba de que las respuestas anteriores no fueron meramente conjeturas." },
+        { bg: ASSETS.bgPrisonControl, speaker: "DAZAI", sprite: ASSETS.dazai_mersault, text: "So this is the part where everything we've learned comes together.", textEs: "Entonces esta es la parte donde todo lo que hemos aprendido se une." },
+        { bg: ASSETS.bgPrisonControl, speaker: "NIKOLAI", sprite: ASSETS.nikolai_mersault, text: "A FINAL TEST! How wonderfully dramatic.", textEs: "¡UNA PRUEBA FINAL! Qué maravillosamente dramático." },
+
+        { type: "question", key: "meursaultFinal", prompt: "FINAL VERIFICATION — Apply everything learned so far:" },
+
+        { bg: ASSETS.bgPrisonCorridor, speaker: "SIGMA", sprite: ASSETS.sigma_mersault, text: "Verification complete. The archive is unlocked.", textEs: "Verificación completa. El archivo está desbloqueado." },
+        { bg: ASSETS.bgPrisonCorridor, speaker: "NIKOLAI", sprite: ASSETS.nikolai_mersault, text: "The archive is open! Everyone, prepare yourselves for the grand finale!", textEs: "¡El archivo está abierto! ¡Todos, prepárense para el gran final!" },
+        { bg: ASSETS.bgPrisonCorridor, speaker: "DAZAI", sprite: ASSETS.dazai_mersault, text: "See? All those grammar exercises finally paid off.", textEs: "¿Ven? Todos esos ejercicios de gramática finalmente valieron la pena." },
+        { bg: ASSETS.bgPrisonCorridor, speaker: "FYODOR", sprite: ASSETS.fyodor_mersault, text: "How interesting. Knowledge can occasionally be useful after all.", textEs: "Qué interesante. El conocimiento puede ocasionalmente ser útil después de todo." },
+
+        { bg: ASSETS.bgAlley, speaker: "DAZAI", sprite: ASSETS.dazai_mersault, text: "And we have the original record. See? The truth is usually easier to find than people think.", textEs: "Y tenemos el registro original. ¿Ven? La verdad suele ser más fácil de encontrar de lo que la gente cree." },
+        { bg: ASSETS.bgAlley, speaker: "SIGMA", sprite: ASSETS.sigma_mersault, text: "The archive confirms it: every route was planted by DOA.", textEs: "El archivo lo confirma: cada ruta fue plantada por DOA." },
+
+        { bg: ASSETS.bgOffice, speaker: "RANPO", sprite: ASSETS.ranpo, text: "There you are! Took you long enough.", textEs: "¡Ahí están! Se tomaron su tiempo." },
+        { bg: ASSETS.bgOffice, speaker: "POE", sprite: ASSETS.poe, text: "Ranpo... are you sure the investigation is truly complete now?", textEs: "Ranpo... ¿estás seguro de que la investigación está realmente completa ahora?" },
+        { bg: ASSETS.bgOffice, speaker: "RANPO", sprite: ASSETS.ranpo, text: "Meursault was DOA's final route. The security system is solved, and the evidence finally fits.", textEs: "Meursault era la ruta final de DOA. El sistema de seguridad está resuelto, y la evidencia finalmente encaja." },
+        { bg: ASSETS.bgOffice, speaker: "POE", sprite: ASSETS.poe, text: "And the cipher?", textEs: "¿Y el cifrado?" },
+        { bg: ASSETS.bgOffice, speaker: "RANPO", sprite: ASSETS.ranpo, text: "It was the lure that brought every organization to the same place.", textEs: "Fue el señuelo que llevó a todas las organizaciones al mismo lugar." },
+        { bg: ASSETS.bgOffice, speaker: "POE", sprite: ASSETS.poe, text: "So the Guild was never the culprit.", textEs: "Entonces el Gremio nunca fue el culpable." },
+        { bg: ASSETS.bgOffice, speaker: "RANPO", sprite: ASSETS.ranpo, text: "Correct. DOA used the Guild, the Rats, the Mafia, and Meursault as pieces of one design.", textEs: "Correcto. DOA usó al Gremio, las Ratas, la Mafia y Meursault como piezas de un mismo diseño." },
+        { bg: ASSETS.bgOffice, speaker: "POE", sprite: ASSETS.poe, text: "Then we really did uncover who was behind the trail.", textEs: "Entonces realmente descubrimos quién estaba detrás del rastro." },
+        { bg: ASSETS.bgOffice, speaker: "RANPO", sprite: ASSETS.ranpo, text: "We did. And by escaping Meursault, we closed their last open path.", textEs: "Lo hicimos. Y al escapar de Meursault, cerramos su último camino abierto." },
+        { bg: ASSETS.bgOffice, speaker: "RANPO", sprite: ASSETS.ranpo, text: "The case is solved.", textEs: "El caso está resuelto." },
+        { bg: ASSETS.bgOffice, speaker: "RANPO", sprite: ASSETS.ranpo, text: "For now.", textEs: "Por ahora." },
+
+        { type: "chapterEnd", chapter: 4 }
+    ];
+
+    /* =========================================================
+       GAME STATE
+    ========================================================= */
+    let currentStep = 0;
+    let score = 0;
+    let totalQuestions = 0;
+    let correctAnswers = 0;
+    let currentDifficulty = "medium";
+    let questionStartTime = 0;
+    let knnClassifier = null;
+    let answerHistory = {};
+    let currentChapter = 1;
+    let reviewMode = "final";
+
+    /* =========================================================
+       KNN MACHINE LEARNING
+    ========================================================= */
+    function initML() {
+        if (typeof ML !== "undefined" && ML.KNN) {
+            const trainX = [
+                [2.0, 1], [3.5, 1], [4.0, 1],
+                [6.0, 1], [8.0, 1], [10.0, 1],
+                [15.0, 1], [20.0, 1],
+                [3.0, 0], [7.0, 0], [12.0, 0], [18.0, 0]
+            ];
+            const trainY = [2, 2, 2, 1, 1, 1, 0, 0, 0, 0, 0, 0];
+            knnClassifier = new ML.KNN(trainX, trainY, { k: 3 });
+        }
+    }
+
+    function predictNextDifficulty(responseTimeSec, isCorrect) {
+        if (!knnClassifier) return currentDifficulty;
+        const prediction = knnClassifier.predict([[responseTimeSec, isCorrect ? 1 : 0]]);
+        const label = prediction[0];
+        if (label === 2) return "hard";
+        if (label === 1) return "medium";
+        return "easy";
+    }
+
+    /* =========================================================
+       START GAME
+    ========================================================= */
+    function startVisualNovel() {
+        document.getElementById("title-screen").style.display = "none";
+        document.getElementById("end-screen").style.display = "none";
+        document.getElementById("review-screen").style.display = "none";
+        document.getElementById("chapter-screen").style.display = "none";
+        document.getElementById("game-menu").style.display = "none";
+
+        initML();
+
+        currentStep = 0;
+        score = 0;
+        totalQuestions = 0;
+        correctAnswers = 0;
+        currentDifficulty = "medium";
+        answerHistory = {};
+        currentChapter = 1;
+        reviewMode = "final";
+
+        updateUI();
+        processStep();
+    }
+
+    function openGameMenu() {
+        const onTitle = document.getElementById("title-screen").style.display !== "none";
+        document.getElementById("resume-menu-btn").innerText = onTitle ? "CLOSE MENU" : "RESUME INVESTIGATION";
+        document.getElementById("game-menu").style.display = "flex";
+    }
+    function closeGameMenu() { document.getElementById("game-menu").style.display = "none"; }
+    function restartFromMenu() { closeGameMenu(); restartGame(); }
+    function returnToTitle() {
+        closeGameMenu();
+        ["dialogue-box", "choice-overlay", "review-screen", "chapter-screen", "end-screen"].forEach(id => document.getElementById(id).style.display = "none");
+        document.getElementById("sprite-layer").style.opacity = "0";
+        document.getElementById("title-screen").style.display = "flex";
+    }
+
+    /* =========================================================
+       UI
+    ========================================================= */
+    function updateUI() {
+        document.getElementById("score-display").innerText = score;
+        const acc = totalQuestions > 0 ? Math.round((correctAnswers / totalQuestions) * 100) : 100;
+        document.getElementById("acc-display").innerText = acc + "%";
+        document.getElementById("difficulty-display").innerText = currentDifficulty.toUpperCase();
+    }
+
+    /* =========================================================
+       STEP PROCESSING
+    ========================================================= */
+    function processStep() {
+        if (currentStep >= storyFlow.length) {
+            showCaseReview();
+            return;
+        }
+
+        const step = storyFlow[currentStep];
+
+        if (step.type === "chapter") {
+            showChapterScreen(step);
+            return;
+        }
+
+        if (step.type === "chapterEnd") {
+            if (step.chapter === 1) { reviewMode = "chapter1"; showCaseReview(); return; }
+            if (step.chapter === 2) { reviewMode = "chapter2"; showCaseReview(); return; }
+            if (step.chapter === 3) { reviewMode = "chapter3"; showCaseReview(); return; }
+            if (step.chapter === 4) { reviewMode = "final"; showCaseReview(); return; }
+        }
+
+        if (step.type === "question" || step.type === "caseChoice") {
+            showQuestion(step);
+        } else {
+            showDialogue(step);
+        }
+    }
+
+    /* =========================================================
+       CHAPTER SCREEN
+    ========================================================= */
+    function showChapterScreen(step) {
+        document.getElementById("dialogue-box").style.display = "none";
+        document.getElementById("choice-overlay").style.display = "none";
+        document.getElementById("sprite-layer").style.opacity = "0";
+
+        const screen = document.getElementById("chapter-screen");
+
+        document.getElementById("chapter-label").innerText = `CHAPTER ${step.number}`;
+        document.getElementById("chapter-title").innerText = step.title;
+        document.getElementById("chapter-subtitle").innerText = step.subtitle || "";
+
+        screen.style.display = "flex";
+    }
+
+    function continueChapter() {
+        document.getElementById("chapter-screen").style.display = "none";
+
+        currentChapter = storyFlow[currentStep].chapter || currentChapter;
+
+        currentStep++;
+        processStep();
+    }
+
+    /* =========================================================
+       DIALOGUE & SPRITES
+    ========================================================= */
+    function showDialogue(step) {
+        document.getElementById("choice-overlay").style.display = "none";
+        document.getElementById("dialogue-box").style.display = "block";
+        if (step.bg) {
+            document.getElementById("bg-layer").style.backgroundImage = `url('${step.bg}')`;
+        }
+        const sprite = document.getElementById("character-sprite");
+        const spriteLayer = document.getElementById("sprite-layer");
+
+        if (step.sprite) {
+            if (sprite.src !== step.sprite) {
+                spriteLayer.style.opacity = "0";
+                setTimeout(() => {
+                    sprite.src = step.sprite;
+                    sprite.alt = step.speaker || "";
+                    spriteLayer.style.opacity = "1";
+                }, 150);
+            } else {
+                spriteLayer.style.opacity = "1";
+            }
+        } else {
+            spriteLayer.style.opacity = "0";
+        }
+        document.getElementById("speaker-name").innerText = step.speaker || "NARRATOR";
+        document.getElementById("dialogue-text").innerText = step.text || "";
+        const translation = document.getElementById("dialogue-translation");
+        if (step.textEs) {
+            translation.innerText = `🇪🇸 ${step.textEs}`;
+            translation.style.display = "block";
+        } else {
+            translation.innerText = "";
+            translation.style.display = "none";
+        }
+    }
+
+    function advanceDialogue() {
+        const step = storyFlow[currentStep];
+        if (step && step.type !== "question" && step.type !== "caseChoice") {
+            currentStep++;
+            processStep();
+        }
+    }
+
+    /* =========================================================
+       QUESTIONS & RANPO HINT
+    ========================================================= */
+    function toggleRanpoHint() {
+        const hintBox = document.getElementById("hint-box");
+        hintBox.style.display = (hintBox.style.display === "block") ? "none" : "block";
+    }
+
+    function showQuestion(step) {
+        document.getElementById("dialogue-box").style.display = "none";
+        const overlay = document.getElementById("choice-overlay");
+        const container = document.getElementById("choice-buttons-container");
+        const hintBtn = document.getElementById("hint-btn");
+        const hintBox = document.getElementById("hint-box");
+
+        document.getElementById("choice-prompt-title").innerText = step.type === "caseChoice" ? "CASE ANALYSIS" : "DECISION POINT";
+        document.getElementById("choice-question-text").innerText = step.prompt;
+        container.innerHTML = "";
+        hintBox.style.display = "none";
+
+        if (currentDifficulty === "hard" && ranpoHints[step.key]) {
+            hintBtn.style.display = "block";
+            const hint = ranpoHints[step.key];
+            hintBox.innerHTML = `<strong>🇬🇧 ${hint.en}</strong><br><br>🇪🇸 ${hint.es}`;
+        } else {
+            hintBtn.style.display = "none";
+        }
+
+        let choices;
+        if (step.type === "caseChoice") {
+            choices = step.choices;
+        } else {
+            if (!questionBank[step.key] || !questionBank[step.key][currentDifficulty]) {
+                console.error("Question data missing for:", step.key, currentDifficulty);
+                currentStep++;
+                processStep();
+                return;
+            }
+            choices = questionBank[step.key][currentDifficulty].choices;
+        }
+
+        const shuffledChoices = [...choices].sort(() => Math.random() - 0.5);
+
+        shuffledChoices.forEach(choice => {
+            const btn = document.createElement("button");
+            btn.className = "choice-btn";
+            btn.innerHTML = `<span style="display:block;">${choice.text}</span><span style="display:block; color:#00e5ff; font-size:13px; margin-top:4px; font-style:italic;">${choice.textEs || ''}</span>`;
+            btn.onclick = () => handleAnswer(choice, step);
+            container.appendChild(btn);
+        });
+
+        overlay.style.display = "flex";
+        questionStartTime = Date.now();
+    }
+
+    /* =========================================================
+       ANSWERS
+    ========================================================= */
+    function handleAnswer(choice, step) {
+        const buttons = document.querySelectorAll(".choice-btn");
+        buttons.forEach(btn => { btn.disabled = true; });
+
+        const responseTimeSec = (Date.now() - questionStartTime) / 1000;
+        totalQuestions++;
+        answerHistory[step.key] = choice.correct;
+
+        if (choice.correct) {
+            score += currentDifficulty === "hard" ? 300 : currentDifficulty === "medium" ? 200 : 100;
+            correctAnswers++;
+            showToast(choice.feedback, choice.feedbackEs, true);
+        } else {
+            showToast(choice.feedback, choice.feedbackEs, false);
+        }
+
+        if (step.type !== "caseChoice") {
+            currentDifficulty = predictNextDifficulty(responseTimeSec, choice.correct);
+        }
+        updateUI();
+        document.getElementById("choice-overlay").style.display = "none";
+        currentStep++;
+        setTimeout(processStep, 1800);
+    }
+
+    /* =========================================================
+       FEEDBACK
+    ========================================================= */
+    function showToast(msgEn, msgEs, isCorrect) {
+        const toast = document.getElementById("feedback-toast");
+        toast.innerHTML = `<div style="font-size:16px;">${msgEn}</div>${msgEs ? `<div style="font-size:13px; color:#fff; opacity:0.9; margin-top:4px;">🇪🇸 ${msgEs}</div>` : ''}`;
+        toast.className = isCorrect ? "correct" : "incorrect";
+        toast.style.display = "block";
+        setTimeout(() => { toast.style.display = "none"; }, 2800);
+    }
+
+    /* =========================================================
+       CASE REVIEW
+    ========================================================= */
+    function showCaseReview() {
+        document.getElementById("dialogue-box").style.display = "none";
+        document.getElementById("choice-overlay").style.display = "none";
+        document.getElementById("sprite-layer").style.opacity = "0";
+
+        const reviewResults = document.getElementById("review-results");
+        reviewResults.innerHTML = "";
+
+        const reviewTitleEl = document.getElementById("review-title");
+        const reviewSubtitleEl = document.getElementById("review-subtitle");
+        const continueButton = document.getElementById("review-continue-btn");
+
+        if (reviewMode === "chapter1") {
+            reviewTitleEl.innerText = "CHAPTER I — CASE REVIEW";
+            reviewSubtitleEl.innerText = "The Guild cipher has been analyzed. But the investigation continues.";
+            continueButton.innerText = "CONTINUE TO CHAPTER II";
+            continueButton.onclick = continueToChapter2;
+        } else if (reviewMode === "chapter2") {
+            reviewTitleEl.innerText = "CHAPTER II — CASE REVIEW";
+            reviewSubtitleEl.innerText = "The truth about the Book has been uncovered. One final connection remains.";
+            continueButton.innerText = "CONTINUE TO CHAPTER III";
+            continueButton.onclick = continueToChapter3;
+        } else if (reviewMode === "chapter3") {
+            reviewTitleEl.innerText = "CHAPTER III — CASE REVIEW";
+            reviewSubtitleEl.innerText = "DOA has been identified. Their final trail leads to Meursault.";
+            continueButton.innerText = "CONTINUE TO CHAPTER IV";
+            continueButton.onclick = continueToChapter4;
+        } else {
+            reviewTitleEl.innerText = "FINAL CASE REVIEW";
+            reviewSubtitleEl.innerText = "The Meursault archive confirms DOA's plan. The investigation is officially closed.";
+            continueButton.innerText = "VIEW FINAL EVALUATION";
+            continueButton.onclick = continueToFinalEvaluation;
+        }
+
+        const categories = [
+            ["verbToBe", "VERB TO BE"],
+            ["comparatives", "COMPARATIVES"],
+            ["pastSimple", "PAST SIMPLE"],
+            ["pastContinuous", "PAST CONTINUOUS"],
+            ["modals", "MODAL VERBS"],
+            ["poeRanpo", "POE + RANPO"],
+            ["atsushiLucy", "ATSUSHI + LUCY"],
+            ["chapter3Guild", "CH. II — GUILD EVIDENCE"],
+            ["chapter3Connection", "CH. II — CONNECTION"],
+            ["chapter3Trail", "CH. II — THE TRAIL"],
+            ["meursaultVerbToBe", "MEURSAULT LOCK I"],
+            ["meursaultComparatives", "MEURSAULT LOCK II"],
+            ["meursaultPastSimple", "MEURSAULT LOCK III"],
+            ["meursaultPastContinuous", "MEURSAULT LOCK IV"],
+            ["meursaultModals", "MEURSAULT LOCK V"],
+            ["meursaultFinal", "MEURSAULT FINAL VERIFICATION"],
+            ["chapter4Mixed1", "CH. III — TENSE ANALYSIS"],
+            ["chapter4Mixed2", "CH. III — COMPARATIVES"],
+            ["chapter4Mixed3", "CH. III — MODAL DEDUCTION"],
+            ["chapter4Final", "CH. III — FINAL CASE ANALYSIS"]
+        ];
+
+        categories.forEach(([key, label]) => {
+            const row = document.createElement("div");
+            const result = answerHistory[key];
+            let statusClass = "pending";
+            let statusText = "— NOT ATTEMPTED";
+            if (result === true) { statusClass = "correct"; statusText = "✓ CORRECT"; }
+            else if (result === false) { statusClass = "incorrect"; statusText = "✗ INCORRECT"; }
+            row.className = `review-row ${statusClass}`;
+            row.innerHTML = `<span>${label}</span><span class="review-status ${statusClass}">${statusText}</span>`;
+            reviewResults.appendChild(row);
+        });
+
+        const meursaultKeys = ["meursaultVerbToBe", "meursaultComparatives", "meursaultPastSimple", "meursaultPastContinuous", "meursaultModals"];
+        const meursaultCorrect = meursaultKeys.filter(key => answerHistory[key] === true).length;
+        document.getElementById("meursault-result").innerText = `${meursaultCorrect}/5`;
+
+        const finalPassed = answerHistory["meursaultFinal"] === true && answerHistory["chapter4Final"] === true;
+        const finalVerification = document.getElementById("final-verification-result");
+        if (finalPassed) {
+            finalVerification.innerText = "✓ PASSED";
+            finalVerification.style.color = "#00c853";
+        } else {
+            finalVerification.innerText = "✗ FAILED";
+            finalVerification.style.color = "#ff1744";
+        }
+
+        document.getElementById("review-screen").style.display = "flex";
+    }
+
+    function continueToChapter2() {
+        document.getElementById("review-screen").style.display = "none";
+        currentStep++;
+        reviewMode = "chapter2";
+        currentChapter = 2;
+        processStep();
+    }
+
+    function continueToChapter3() {
+        document.getElementById("review-screen").style.display = "none";
+        currentStep++;
+        reviewMode = "chapter3";
+        currentChapter = 3;
+        processStep();
+    }
+
+    function continueToChapter4() {
+        document.getElementById("review-screen").style.display = "none";
+        currentStep++;
+        reviewMode = "final";
+        currentChapter = 4;
+        processStep();
+    }
+
+    function continueToFinalEvaluation() {
+        document.getElementById("review-screen").style.display = "none";
+        showFinalScreen();
+    }
+
+    /* =========================================================
+       FINAL SCREEN
+    ========================================================= */
+    function showFinalScreen() {
+        document.getElementById("dialogue-box").style.display = "none";
+        document.getElementById("choice-overlay").style.display = "none";
+
+        const finalScreen = document.getElementById("end-screen");
+        const acc = totalQuestions > 0 ? Math.round((correctAnswers / totalQuestions) * 100) : 0;
+
+        const meursaultKeys = ["meursaultVerbToBe", "meursaultComparatives", "meursaultPastSimple", "meursaultPastContinuous", "meursaultModals"];
+        const meursaultCorrect = meursaultKeys.filter(key => answerHistory[key] === true).length;
+        const finalVerificationPassed = answerHistory["meursaultFinal"] === true && answerHistory["chapter4Final"] === true;
+
+        let rank = "C";
+        if (acc >= 90 && meursaultCorrect >= 4 && finalVerificationPassed) rank = "S";
+        else if (acc >= 75 && meursaultCorrect >= 3) rank = "A";
+        else if (acc >= 60 && meursaultCorrect >= 2) rank = "B";
+
+        document.getElementById("final-rank").innerText = rank;
+        document.getElementById("final-stats-summary").innerText =
+            `FINAL SCORE: ${score} | ACCURACY: ${acc}% (${correctAnswers}/${totalQuestions}) | MEURSAULT: ${meursaultCorrect}/5`;
+        document.getElementById("final-difficulty-summary").innerText =
+            `Final Adaptive Level Reached: ${currentDifficulty.toUpperCase()} | Final Verification: ${finalVerificationPassed ? "PASSED" : "FAILED"}`;
+
+        let description;
+        if (rank === "S") {
+            description = "Outstanding investigation. You solved the case, recovered the Meursault archive with excellent accuracy, and passed the final verification. Ranpo has officially approved your detective work.";
+        } else if (rank === "A") {
+            description = "Excellent work. The investigation was solved successfully, and you recovered the Meursault archive with only minor mistakes.";
+        } else if (rank === "B") {
+            description = "A solid investigation. You recovered the Meursault evidence, but some linguistic clues should be reviewed before your next case.";
+        } else {
+            description = "The case was difficult, especially the Meursault archive system. Review the evidence and strengthen your English before taking on another investigation.";
+        }
+        document.getElementById("end-description").innerText = description;
+
+        finalScreen.style.display = "flex";
+    }
+
+    /* =========================================================
+       RESTART & KEYBOARD
+    ========================================================= */
+    function restartGame() {
+        document.getElementById("end-screen").style.display = "none";
+        document.getElementById("review-screen").style.display = "none";
+        document.getElementById("chapter-screen").style.display = "none";
+        startVisualNovel();
+    }
+
+    document.addEventListener("keydown", (e) => {
+        if (e.code === "Escape") {
+            const menu = document.getElementById("game-menu");
+            if (menu.style.display === "flex") closeGameMenu(); else openGameMenu();
+            return;
+        }
+        if (e.code === "Space") {
+            e.preventDefault();
+            const dialogueBox = document.getElementById("dialogue-box");
+            const overlay = document.getElementById("choice-overlay");
+            const menu = document.getElementById("game-menu");
+            if (menu.style.display !== "flex" && dialogueBox.style.display !== "none" && overlay.style.display !== "flex") {
+                advanceDialogue();
+            }
+        }
+    });
+
+    /* =========================================================
+       PRELOAD
+    ========================================================= */
+    function preloadImages() {
+        Object.entries(ASSETS).forEach(([name, url]) => {
+            const img = new Image();
+            img.onerror = () => { console.warn("Could not preload image:", name); };
+            img.src = url;
+        });
+    }
+    preloadImages();
+</script>
+
+</body>
+</html>
