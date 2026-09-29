@@ -8,7 +8,6 @@
     <script src="https://www.lactame.com/lib/ml/6.0.0/ml.min.js"></script>
 
     <style>
-        /* ===== DANGANRONPA INSPIRED STYLES ===== */
         @import url('https://fonts.googleapis.com/css2?family=Anton&family=Bebas+Neue&family=Noto+Sans+JP:wght@400;700;900&display=swap');
 
         * { box-sizing: border-box; margin: 0; padding: 0; }
@@ -100,82 +99,91 @@
             display: block;
         }
 
-        /* ===== TOP BAR ===== */
-        .top-bar {
+        /* ===== ML HUD DIEGÉTICO ===== */
+        #ml-indicator {
             position: absolute;
-            top: 0;
-            left: 0;
-            right: 0;
-            display: flex;
-            justify-content: space-between;
-            align-items: stretch;
-            z-index: 12;
-            gap: 0;
-            flex-wrap: nowrap;
-            padding: 0;
-        }
-
-        .case-title-badge {
-            background: linear-gradient(135deg, #ff2a6d, #b3004a);
-            color: #fff;
-            padding: 10px 24px 10px 18px;
-            font-family: 'Anton', sans-serif;
-            font-size: 16px;
-            letter-spacing: 2px;
-            text-transform: uppercase;
-            clip-path: polygon(0 0, 100% 0, 92% 100%, 0 100%);
-            box-shadow: 4px 4px 0 #000;
-            transform: rotate(-0.5deg);
-            text-shadow: 2px 2px 0 #000;
-        }
-
-        .stats-badge {
-            background: rgba(0, 0, 0, 0.9);
-            border-top: 3px solid #ff2a6d;
-            border-bottom: 3px solid #ff2a6d;
-            color: #fff;
-            padding: 10px 20px;
+            bottom: 235px;
+            right: 24px;
+            background: rgba(0, 0, 0, 0.75);
+            border-left: 4px solid #00e5ff;
+            padding: 8px 16px 8px 20px;
             font-family: 'Bebas Neue', sans-serif;
-            font-size: 15px;
+            font-size: 13px;
             letter-spacing: 2px;
-            display: flex;
-            align-items: center;
-            gap: 14px;
+            color: #00e5ff;
+            z-index: 11;
+            clip-path: polygon(0 0, 100% 0, 100% 100%, 10% 100%);
+            transform: rotate(-1deg);
+            box-shadow: 4px 4px 0 rgba(0, 0, 0, 0.6);
             text-shadow: 1px 1px 0 #000;
+            transition: border-color 0.3s, color 0.3s;
         }
 
-        .stats-badge span {
-            color: #ff2a6d;
+        #ml-indicator .ml-label {
+            position: absolute;
+            top: -10px;
+            left: -4px;
+            background: #00e5ff;
+            color: #000;
+            font-family: 'Anton', sans-serif;
+            font-size: 9px;
+            padding: 1px 6px;
+            letter-spacing: 1px;
             font-weight: 900;
-            font-size: 18px;
         }
 
-        #difficulty-display {
-            color: #00e5ff !important;
+        #ml-indicator #difficulty-display {
+            color: #00e5ff;
+            font-weight: 900;
+            font-size: 16px;
             transition: color 0.3s;
         }
 
-        .menu-btn {
-            background: #ff2a6d;
-            border: 3px solid #000;
-            color: #fff;
-            padding: 10px 22px;
+        #ml-indicator.difficulty-hard {
+            border-left-color: #ff2a6d;
+        }
+        #ml-indicator.difficulty-hard .ml-label { background: #ff2a6d; color: #fff; }
+        #ml-indicator.difficulty-hard #difficulty-display { color: #ff2a6d; }
+
+        #ml-indicator.difficulty-easy {
+            border-left-color: #00c853;
+        }
+        #ml-indicator.difficulty-easy .ml-label { background: #00c853; color: #000; }
+        #ml-indicator.difficulty-easy #difficulty-display { color: #00c853; }
+
+        /* ===== FLASH DIEGÉTICO cuando cambia dificultad ===== */
+        #difficulty-flash {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%) rotate(-3deg) scale(0.8);
+            background: #00e5ff;
+            color: #000;
             font-family: 'Anton', sans-serif;
-            font-size: 14px;
-            letter-spacing: 2px;
-            cursor: pointer;
+            font-size: 32px;
+            letter-spacing: 4px;
+            padding: 14px 40px;
+            border: 4px solid #000;
+            box-shadow: 8px 8px 0 #000;
+            clip-path: polygon(3% 0, 100% 0, 97% 100%, 0 100%);
+            z-index: 26;
+            display: none;
+            opacity: 0;
+            pointer-events: none;
             text-transform: uppercase;
-            clip-path: polygon(8% 0, 100% 0, 92% 100%, 0 100%);
-            box-shadow: 4px 4px 0 #000;
-            transition: all 0.15s ease;
-            text-shadow: 1px 1px 0 #000;
         }
 
-        .menu-btn:hover {
-            background: #fff;
-            color: #ff2a6d;
-            transform: translate(-2px, -2px);
-            box-shadow: 6px 6px 0 #000;
+        #difficulty-flash.show {
+            display: block;
+            animation: difficultyPop 1.6s ease-out forwards;
+        }
+
+        @keyframes difficultyPop {
+            0%   { opacity: 0; transform: translate(-50%, -50%) rotate(-3deg) scale(0.6); }
+            15%  { opacity: 1; transform: translate(-50%, -50%) rotate(-3deg) scale(1.1); }
+            30%  { transform: translate(-50%, -50%) rotate(-3deg) scale(1.0); }
+            75%  { opacity: 1; }
+            100% { opacity: 0; transform: translate(-50%, -50%) rotate(-3deg) scale(1.0); }
         }
 
         /* ===== GAME MENU ===== */
@@ -202,7 +210,7 @@
         }
 
         .game-menu-card::before {
-            content: "MENU";
+            content: "PAUSE";
             position: absolute;
             top: -18px;
             left: 50%;
@@ -231,6 +239,22 @@
             line-height: 1.6;
             font-family: 'Noto Sans JP', sans-serif;
         }
+
+        .pause-stats {
+            display: grid;
+            grid-template-columns: 1fr;
+            gap: 6px;
+            margin: 16px 0;
+            padding: 14px 18px;
+            background: rgba(0, 229, 255, 0.08);
+            border-left: 4px solid #00e5ff;
+            font-family: 'Bebas Neue', sans-serif;
+            font-size: 14px;
+            letter-spacing: 2px;
+            color: #fff;
+            text-align: left;
+        }
+        .pause-stats span { color: #00e5ff; font-weight: 900; }
 
         .game-menu-actions {
             display: grid;
@@ -282,11 +306,6 @@
             box-shadow: 0 0 0 3px #000, 8px 8px 0 rgba(255, 42, 109, 0.3);
             cursor: pointer;
             clip-path: polygon(0 0, 100% 0, 100% 100%, 2% 100%, 0 88%);
-            transition: transform 0.15s ease;
-        }
-
-        #dialogue-box:hover {
-            transform: scale(1.005);
         }
 
         #speaker-name {
@@ -334,9 +353,8 @@
             position: absolute;
             bottom: 10px;
             right: 24px;
-            font-size: 13px;
+            font-size: 18px;
             color: #ff2a6d;
-            letter-spacing: 2px;
             font-family: 'Bebas Neue', sans-serif;
             animation: blinkDangan 0.8s infinite;
             text-shadow: 1px 1px 0 #000;
@@ -526,7 +544,6 @@
             overflow: hidden;
         }
 
-        /* Character showcase strip */
         .title-characters {
             display: flex;
             gap: -20px;
@@ -1023,9 +1040,8 @@
             .chapter-title { font-size: 48px; }
             .title-screen h1 { font-size: 34px; }
             .title-characters { height: 120px; }
-            .stats-badge { font-size: 12px; padding: 8px 12px; gap: 8px; }
-            .case-title-badge { font-size: 12px; padding: 8px 14px; }
             #dialogue-text { font-size: 16px; }
+            #ml-indicator { bottom: 230px; right: 12px; font-size: 11px; }
         }
     </style>
 </head>
@@ -1048,25 +1064,32 @@
         <button class="title-menu-btn" onclick="openGameMenu()">CASE MENU</button>
     </div>
 
-    <!-- ===== TOP BAR ===== -->
-    <div class="top-bar">
-        <div class="case-title-badge">CASE FILE: THE YOKOHAMA CIPHER</div>
-        <div class="stats-badge">
-            SCORE: <span id="score-display">0</span>
-            ACCURACY: <span id="acc-display">100%</span>
-            DIFFICULTY: <span id="difficulty-display">MEDIUM</span>
-        </div>
-        <button class="menu-btn" onclick="openGameMenu()">MENU</button>
+    <!-- ===== ML HUD (diegético) ===== -->
+    <div id="ml-indicator">
+        <span class="ml-label">KNN</span>
+        DIFFICULTY: <span id="difficulty-display">MEDIUM</span>
     </div>
+
+    <!-- ===== SCORE/ACC ocultos (solo se muestran en pausa) ===== -->
+    <div id="score-display" style="display:none;">0</div>
+    <div id="acc-display" style="display:none;">100%</div>
 
     <!-- ===== FEEDBACK ===== -->
     <div id="feedback-toast"></div>
+
+    <!-- ===== DIFFICULTY FLASH ===== -->
+    <div id="difficulty-flash"></div>
 
     <!-- ===== GAME MENU ===== -->
     <div id="game-menu">
         <div class="game-menu-card">
             <h2>CASE MENU</h2>
             <p>The Yokohama Cipher investigation is currently paused.</p>
+            <div class="pause-stats">
+                <div>SCORE: <span id="pause-score">0</span></div>
+                <div>ACCURACY: <span id="pause-acc">100%</span></div>
+                <div>ML DIFFICULTY: <span id="pause-diff">MEDIUM</span></div>
+            </div>
             <div class="game-menu-actions">
                 <button id="resume-menu-btn" onclick="closeGameMenu()">RESUME INVESTIGATION</button>
                 <button onclick="restartFromMenu()">RESTART CASE</button>
@@ -1089,7 +1112,7 @@
         <div id="speaker-name">DETECTIVE</div>
         <div id="dialogue-text">Initializing story sequence...</div>
         <div id="dialogue-translation"></div>
-        <div class="click-prompt">CLICK OR PRESS SPACE ▶</div>
+        <div class="click-prompt">▶</div>
     </div>
 
     <!-- ===== QUESTION OVERLAY ===== -->
@@ -2097,6 +2120,12 @@
     function openGameMenu() {
         const onTitle = document.getElementById("title-screen").style.display !== "none";
         document.getElementById("resume-menu-btn").innerText = onTitle ? "CLOSE MENU" : "RESUME INVESTIGATION";
+
+        const acc = totalQuestions > 0 ? Math.round((correctAnswers / totalQuestions) * 100) : 100;
+        document.getElementById("pause-score").innerText = score;
+        document.getElementById("pause-acc").innerText = acc + "%";
+        document.getElementById("pause-diff").innerText = currentDifficulty.toUpperCase();
+
         document.getElementById("game-menu").style.display = "flex";
     }
     function closeGameMenu() { document.getElementById("game-menu").style.display = "none"; }
@@ -2116,6 +2145,24 @@
         const acc = totalQuestions > 0 ? Math.round((correctAnswers / totalQuestions) * 100) : 100;
         document.getElementById("acc-display").innerText = acc + "%";
         document.getElementById("difficulty-display").innerText = currentDifficulty.toUpperCase();
+
+        const hud = document.getElementById("ml-indicator");
+        if (hud) {
+            hud.classList.remove("difficulty-easy", "difficulty-medium", "difficulty-hard");
+            hud.classList.add("difficulty-" + currentDifficulty);
+        }
+    }
+
+    function announceDifficultyChange(newDiff, oldDiff) {
+        const flash = document.getElementById("difficulty-flash");
+        if (!flash) return;
+        const messages = { easy: "EASY MODE", medium: "MEDIUM MODE", hard: "HARD MODE" };
+        flash.innerText = messages[newDiff] || newDiff.toUpperCase();
+        flash.style.background = newDiff === "hard" ? "#ff2a6d" : newDiff === "easy" ? "#00c853" : "#00e5ff";
+        flash.style.color = newDiff === "easy" ? "#000" : "#fff";
+        flash.classList.remove("show");
+        void flash.offsetWidth;
+        flash.classList.add("show");
     }
 
     /* =========================================================
@@ -2167,9 +2214,7 @@
 
     function continueChapter() {
         document.getElementById("chapter-screen").style.display = "none";
-
         currentChapter = storyFlow[currentStep].chapter || currentChapter;
-
         currentStep++;
         processStep();
     }
@@ -2295,7 +2340,11 @@
         }
 
         if (step.type !== "caseChoice") {
+            const previousDifficulty = currentDifficulty;
             currentDifficulty = predictNextDifficulty(responseTimeSec, choice.correct);
+            if (currentDifficulty !== previousDifficulty) {
+                announceDifficultyChange(currentDifficulty, previousDifficulty);
+            }
         }
         updateUI();
         document.getElementById("choice-overlay").style.display = "none";
