@@ -6,6 +6,8 @@
     <title>Armed Detective Agency: Visual Novel Investigation (Danganronpa Style)</title>
 
     <script src="https://www.lactame.com/lib/ml/6.0.0/ml.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/ml-knn@2.0.0/dist/ml-knn.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/ml-kmeans@4.0.0/dist/ml-kmeans.min.js"></script>
 
     <link rel="stylesheet" href="style.css" />
 </head>
@@ -39,6 +41,15 @@
 
     <div id="feedback-toast"></div>
     <div id="difficulty-flash"></div>
+
+    <div class="hud-item">
+    <span>PROFILE:</span>
+    <span id="profile-display">Principiante</span>
+</div>
+<div class="hud-item">
+    <span>STYLE:</span>
+    <span id="style-display">Equilibrado</span>
+</div>
 
     <!-- ===== GAME MENU ===== -->
     <div id="game-menu">
@@ -113,6 +124,7 @@
     </div>
 
     <div id="end-screen" class="final-screen">
+        <div id="ml-summary"></div>
         <div class="final-case">
             <div class="final-header">
                 <span>ARMED DETECTIVE AGENCY</span>

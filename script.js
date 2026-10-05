@@ -33,93 +33,29 @@ const ASSETS = {
 };
 
 /* =========================================================
-   RANPO HINTS — CON TRADUCCIÓN AL ESPAÑOL
+   RANPO HINTS
 ========================================================= */
 const ranpoHints = {
-    verbToBe: {
-        en: "Ranpo's Deduction: Remember! When using 'neither... nor...', the verb always agrees with the subject closest to it.",
-        es: "Deducción de Ranpo: ¡Recuerda! Con 'neither... nor...', el verbo siempre concuerda con el sujeto más cercano."
-    },
-    comparatives: {
-        en: "Ranpo's Deduction: Don't fall for double comparative traps! Never combine 'more' with '-er'. Watch for 'the [more]..., the [clearer]...' patterns.",
-        es: "Deducción de Ranpo: ¡No caigas en trampas de doble comparativo! Nunca combines 'more' con '-er'. Observa patrones como 'the more..., the clearer...'."
-    },
-    pastSimple: {
-        en: "Ranpo's Deduction: Keep it simple! We need a single, completed action in the past, not a complex past continuous or perfect structure.",
-        es: "Deducción de Ranpo: ¡Mantenlo simple! Necesitamos una acción única y completada en el pasado, no una estructura compleja de pasado continuo o perfecto."
-    },
-    pastContinuous: {
-        en: "Ranpo's Deduction: Pay attention to compound subjects! Two people performing an ongoing past action require a plural verb ('were + -ing').",
-        es: "Deducción de Ranpo: ¡Presta atención a los sujetos compuestos! Dos personas realizando una acción pasada en curso requieren un verbo plural ('were + -ing')."
-    },
-    modals: {
-        en: "Ranpo's Deduction: Deductions about past events require 'Modal + HAVE + Past Participle'. Never use 'has' or 'had' after a modal verb!",
-        es: "Deducción de Ranpo: Las deducciones sobre eventos pasados requieren 'Modal + HAVE + Participio Pasado'. ¡Nunca uses 'has' o 'had' después de un verbo modal!"
-    },
-
-    poeRanpo: {
-        en: "Ranpo's Deduction: In complex conditional structures, pay attention to the relationship between the hypothetical condition and its result. Poe's evidence must also agree with the timeline.",
-        es: "Deducción de Ranpo: En estructuras condicionales complejas, presta atención a la relación entre la condición hipotética y su resultado. La evidencia de Poe también debe concordar con la línea temporal."
-    },
-    atsushiLucy: {
-        en: "Ranpo's Deduction: Relative clauses describe people or things, while reported speech changes the tense and word order of the original statement.",
-        es: "Deducción de Ranpo: Las cláusulas relativas describen personas o cosas, mientras que el estilo indirecto cambia el tiempo verbal y el orden de las palabras del enunciado original."
-    },
-
-    chapter3Guild: {
-        en: "Ranpo's Deduction: Look at what the evidence actually proves, not what you assume. Involvement and responsibility are different.",
-        es: "Deducción de Ranpo: Mira lo que la evidencia realmente prueba, no lo que asumes. Implicación y responsabilidad son diferentes."
-    },
-    chapter3Connection: {
-        en: "Ranpo's Deduction: Follow the sequence of records. The direction of information flow is the key.",
-        es: "Deducción de Ranpo: Sigue la secuencia de registros. La dirección del flujo de información es la clave."
-    },
-    chapter3Trail: {
-        en: "Ranpo's Deduction: If multiple organizations are following the same path, someone is probably controlling the direction.",
-        es: "Deducción de Ranpo: Si múltiples organizaciones siguen el mismo camino, alguien probablemente está controlando la dirección."
-    },
-
-    meursaultVerbToBe: {
-        en: "Ranpo's Deduction: Focus on subject-verb agreement! Check whether the nearest subject is singular or plural.",
-        es: "Deducción de Ranpo: ¡Concéntrate en la concordancia sujeto-verbo! Verifica si el sujeto más cercano es singular o plural."
-    },
-    meursaultComparatives: {
-        en: "Ranpo's Deduction: Double comparative structures need exact symmetry between adjectives and adverbs.",
-        es: "Deducción de Ranpo: Las estructuras de doble comparativo necesitan simetría exacta entre adjetivos y adverbios."
-    },
-    meursaultPastSimple: {
-        en: "Ranpo's Deduction: Irregular past forms can be tricky. Look for pure Past Simple rather than Past Perfect.",
-        es: "Deducción de Ranpo: Las formas irregulares del pasado pueden ser complicadas. Busca el Pasado Simple puro en lugar del Pasado Perfecto."
-    },
-    meursaultPastContinuous: {
-        en: "Ranpo's Deduction: Ensure the action was continuously happening when another event interrupted it.",
-        es: "Deducción de Ranpo: Asegúrate de que la acción estaba ocurriendo continuamente cuando otro evento la interrumpió."
-    },
-    meursaultModals: {
-        en: "Ranpo's Deduction: Speculating on past system logs demands 'must have' followed by the past participle.",
-        es: "Deducción de Ranpo: Especular sobre registros pasados del sistema exige 'must have' seguido del participio pasado."
-    },
-    meursaultFinal: {
-        en: "Ranpo's Deduction: Combine every rule! Subject agreement, comparative symmetry, and past modal forms must all match perfectly.",
-        es: "Deducción de Ranpo: ¡Combina todas las reglas! La concordancia del sujeto, la simetría comparativa y las formas modales pasadas deben coincidir perfectamente."
-    },
-
-    chapter4Mixed1: {
-        en: "Ranpo's Deduction: This sentence combines past simple and past continuous. Identify which action was already happening when the second event occurred.",
-        es: "Deducción de Ranpo: Esta oración combina pasado simple y pasado continuo. Identifica qué acción ya estaba ocurriendo cuando sucedió el segundo evento."
-    },
-    chapter4Mixed2: {
-        en: "Ranpo's Deduction: Comparatives describe relationships between two things. Watch for the correct adjective form.",
-        es: "Deducción de Ranpo: Los comparativos describen relaciones entre dos cosas. Observa la forma correcta del adjetivo."
-    },
-    chapter4Mixed3: {
-        en: "Ranpo's Deduction: Modal verbs are followed by the base form. For past deductions, use 'must have + past participle'.",
-        es: "Deducción de Ranpo: Los verbos modales van seguidos de la forma base. Para deducciones pasadas, usa 'must have + participio pasado'."
-    },
-    chapter4Final: {
-        en: "Ranpo's Deduction: Everything matters now. Check subject agreement, tense, comparatives, reported speech, and modal structures before deciding.",
-        es: "Deducción de Ranpo: Ahora todo importa. Verifica la concordancia del sujeto, el tiempo verbal, los comparativos, el estilo indirecto y las estructuras modales antes de decidir."
-    }
+    verbToBe: { en: "Ranpo's Deduction: Remember! When using 'neither... nor...', the verb always agrees with the subject closest to it.", es: "Deducción de Ranpo: ¡Recuerda! Con 'neither... nor...', el verbo siempre concuerda con el sujeto más cercano." },
+    comparatives: { en: "Ranpo's Deduction: Don't fall for double comparative traps! Never combine 'more' with '-er'.", es: "Deducción de Ranpo: ¡No caigas en trampas de doble comparativo! Nunca combines 'more' con '-er'." },
+    pastSimple: { en: "Ranpo's Deduction: Keep it simple! We need a single, completed action in the past.", es: "Deducción de Ranpo: ¡Mantenlo simple! Necesitamos una acción única y completada en el pasado." },
+    pastContinuous: { en: "Ranpo's Deduction: Pay attention to compound subjects! Two people require a plural verb ('were + -ing').", es: "Deducción de Ranpo: ¡Presta atención a los sujetos compuestos! Dos personas requieren un verbo plural ('were + -ing')." },
+    modals: { en: "Ranpo's Deduction: Deductions about past events require 'Modal + HAVE + Past Participle'.", es: "Deducción de Ranpo: Las deducciones sobre eventos pasados requieren 'Modal + HAVE + Participio Pasado'." },
+    poeRanpo: { en: "Ranpo's Deduction: In complex conditional structures, pay attention to the relationship between the hypothetical condition and its result.", es: "Deducción de Ranpo: En estructuras condicionales complejas, presta atención a la relación entre la condición hipotética y su resultado." },
+    atsushiLucy: { en: "Ranpo's Deduction: Relative clauses describe people or things, while reported speech changes the tense and word order.", es: "Deducción de Ranpo: Las cláusulas relativas describen personas o cosas, mientras que el estilo indirecto cambia el tiempo verbal y el orden." },
+    chapter3Guild: { en: "Ranpo's Deduction: Look at what the evidence actually proves, not what you assume.", es: "Deducción de Ranpo: Mira lo que la evidencia realmente prueba, no lo que asumes." },
+    chapter3Connection: { en: "Ranpo's Deduction: Follow the sequence of records. The direction of information flow is the key.", es: "Deducción de Ranpo: Sigue la secuencia de registros. La dirección del flujo de información es la clave." },
+    chapter3Trail: { en: "Ranpo's Deduction: If multiple organizations are following the same path, someone is probably controlling the direction.", es: "Deducción de Ranpo: Si múltiples organizaciones siguen el mismo camino, alguien probablemente está controlando la dirección." },
+    meursaultVerbToBe: { en: "Ranpo's Deduction: Focus on subject-verb agreement!", es: "Deducción de Ranpo: ¡Concéntrate en la concordancia sujeto-verbo!" },
+    meursaultComparatives: { en: "Ranpo's Deduction: Double comparative structures need exact symmetry.", es: "Deducción de Ranpo: Las estructuras de doble comparativo necesitan simetría exacta." },
+    meursaultPastSimple: { en: "Ranpo's Deduction: Irregular past forms can be tricky.", es: "Deducción de Ranpo: Las formas irregulares del pasado pueden ser complicadas." },
+    meursaultPastContinuous: { en: "Ranpo's Deduction: Ensure the action was continuously happening when another event interrupted it.", es: "Deducción de Ranpo: Asegúrate de que la acción estaba ocurriendo continuamente cuando otro evento la interrumpió." },
+    meursaultModals: { en: "Ranpo's Deduction: Speculating on past system logs demands 'must have' followed by the past participle.", es: "Deducción de Ranpo: Especular sobre registros pasados del sistema exige 'must have' seguido del participio pasado." },
+    meursaultFinal: { en: "Ranpo's Deduction: Combine every rule! Subject agreement, comparative symmetry, and past modal forms must all match perfectly.", es: "Deducción de Ranpo: ¡Combina todas las reglas! La concordancia del sujeto, la simetría comparativa y las formas modales pasadas deben coincidir perfectamente." },
+    chapter4Mixed1: { en: "Ranpo's Deduction: Identify which action was already happening when the second event occurred.", es: "Deducción de Ranpo: Identifica qué acción ya estaba ocurriendo cuando sucedió el segundo evento." },
+    chapter4Mixed2: { en: "Ranpo's Deduction: Comparatives describe relationships between two things.", es: "Deducción de Ranpo: Los comparativos describen relaciones entre dos cosas." },
+    chapter4Mixed3: { en: "Ranpo's Deduction: Modal verbs are followed by the base form. For past deductions, use 'must have + past participle'.", es: "Deducción de Ranpo: Los verbos modales van seguidos de la forma base. Para deducciones pasadas, usa 'must have + participio pasado'." },
+    chapter4Final: { en: "Ranpo's Deduction: Everything matters now. Check subject agreement, tense, comparatives, reported speech, and modal structures.", es: "Deducción de Ranpo: Ahora todo importa. Verifica la concordancia del sujeto, el tiempo verbal, los comparativos, el estilo indirecto y las estructuras modales." }
 };
 
 /* =========================================================
@@ -873,34 +809,125 @@ let totalQuestions = 0;
 let correctAnswers = 0;
 let currentDifficulty = "medium";
 let questionStartTime = 0;
-let knnClassifier = null;
 let answerHistory = {};
 let currentChapter = 1;
 let reviewMode = "final";
+let knnClassifier = null;       // Para predecir dificultad
+let profileClassifier = null;   // Para clasificar jugador (Punto 1)
+let playerProfile = "Principiante";
+let playerStyle = "Equilibrado"; // Punto 4
+let abandonRisk = 0;             // Punto 2
+let responseTimes = [];    
 
 /* =========================================================
    KNN MACHINE LEARNING
 ========================================================= */
 function initML() {
     if (typeof ML !== "undefined" && ML.KNN) {
+        // Datos de entrenamiento ampliados: [tiempoPromedio, ratioAciertos, preguntasRespondidas]
         const trainX = [
-            [2.0, 1], [3.5, 1], [4.0, 1],
-            [6.0, 1], [8.0, 1], [10.0, 1],
-            [15.0, 1], [20.0, 1],
-            [3.0, 0], [7.0, 0], [12.0, 0], [18.0, 0]
+            [2.0, 1.0, 5],   // Hard, experto
+            [3.0, 0.9, 8],   // Hard
+            [5.0, 0.8, 12],  // Medium
+            [6.0, 0.7, 15],  // Medium
+            [10.0, 0.5, 20], // Easy (lento, muchos errores)
+            [15.0, 0.3, 25], // Easy (muy lento, falla mucho)
+            [4.0, 0.95, 10], // Hard
+            [8.0, 0.6, 18]   // Easy/Medium
         ];
-        const trainY = [2, 2, 2, 1, 1, 1, 0, 0, 0, 0, 0, 0];
+        
+        // Etiquetas para dificultad: 0 = Easy, 1 = Medium, 2 = Hard
+        const trainY = [2, 2, 1, 1, 0, 0, 2, 1];
         knnClassifier = new ML.KNN(trainX, trainY, { k: 3 });
+
+        // Etiquetas para perfil de jugador: 0 = Principiante, 1 = Intermedio, 2 = Avanzado
+        // Usamos una copia de los datos pero con etiquetas de perfil
+        const profileLabels = [2, 2, 1, 1, 0, 0, 2, 1];
+        profileClassifier = new ML.KNN(trainX, profileLabels, { k: 3 });
     }
 }
 
+// Punto 3: Ajustar dificultad
 function predictNextDifficulty(responseTimeSec, isCorrect) {
     if (!knnClassifier) return currentDifficulty;
-    const prediction = knnClassifier.predict([[responseTimeSec, isCorrect ? 1 : 0]]);
+    
+    // Calcular promedio de tiempo real
+    responseTimes.push(responseTimeSec);
+    const avgTime = responseTimes.reduce((a, b) => a + b, 0) / responseTimes.length;
+    const accuracy = totalQuestions > 0 ? correctAnswers / totalQuestions : 0.5;
+    
+    const prediction = knnClassifier.predict([[avgTime, accuracy, totalQuestions]]);
     const label = prediction[0];
     if (label === 2) return "hard";
     if (label === 1) return "medium";
     return "easy";
+}
+
+// Punto 1: Clasificar jugador
+function updatePlayerProfile() {
+    if (!profileClassifier || totalQuestions < 3) return;
+    
+    const avgTime = responseTimes.reduce((a, b) => a + b, 0) / responseTimes.length;
+    const accuracy = correctAnswers / totalQuestions;
+    
+    const prediction = profileClassifier.predict([[avgTime, accuracy, totalQuestions]]);
+    const profileLabel = prediction[0];
+    
+    if (profileLabel === 2) playerProfile = "Avanzado";
+    else if (profileLabel === 1) playerProfile = "Intermedio";
+    else playerProfile = "Principiante";
+    
+    console.log(`[ML] Perfil actualizado: ${playerProfile}`);
+}
+
+// Punto 2: Predecir abandono
+function predictAbandonRisk() {
+    if (totalQuestions < 4) { abandonRisk = 0.1; return; }
+    
+    const accuracy = correctAnswers / totalQuestions;
+    const avgTime = responseTimes.reduce((a, b) => a + b, 0) / responseTimes.length;
+    
+    // Heurística simple basada en rendimiento
+    if (accuracy < 0.35 && totalQuestions > 5) {
+        abandonRisk = 0.85; // Alto riesgo
+    } else if (accuracy < 0.55 && avgTime > 10) {
+        abandonRisk = 0.6; // Medio
+    } else if (accuracy > 0.8) {
+        abandonRisk = 0.05; // Muy bajo
+    } else {
+        abandonRisk = 0.2; // Bajo
+    }
+    
+    console.log(`[ML] Riesgo de abandono: ${(abandonRisk * 100).toFixed(0)}%`);
+}
+
+// Punto 4: Detectar estilos de juego
+function detectPlayerStyle() {
+    if (totalQuestions < 5) return;
+    
+    const avgTime = responseTimes.reduce((a, b) => a + b, 0) / responseTimes.length;
+    const accuracy = correctAnswers / totalQuestions;
+    
+    const isFast = avgTime < 6;
+    const isAccurate = accuracy > 0.65;
+    
+    if (isFast && isAccurate) playerStyle = "Experto";
+    else if (isFast && !isAccurate) playerStyle = "Arriesgado";
+    else if (!isFast && isAccurate) playerStyle = "Analítico";
+    else playerStyle = "Cauteloso";
+    
+    console.log(`[ML] Estilo detectado: ${playerStyle}`);
+}
+
+// Punto 5: Recomendar desafíos (basado en perfil)
+function recommendChallenge() {
+    if (playerProfile === "Avanzado" && currentDifficulty !== "hard") {
+        currentDifficulty = "hard";
+    } else if (playerProfile === "Principiante" && currentDifficulty === "hard") {
+        currentDifficulty = "easy";
+    } else if (playerStyle === "Arriesgado" && currentDifficulty === "easy") {
+        currentDifficulty = "medium"; // Empujarlo un poco
+    }
 }
 
 /* =========================================================
@@ -923,6 +950,10 @@ function startVisualNovel() {
     answerHistory = {};
     currentChapter = 1;
     reviewMode = "final";
+    responseTimes = [];
+    playerProfile = "Principiante";
+    playerStyle = "Equilibrado";
+    abandonRisk = 0;
 
     updateUI();
     processStep();
@@ -948,14 +979,17 @@ function returnToTitle() {
     document.getElementById("title-screen").style.display = "flex";
 }
 
-/* =========================================================
-   UI
-========================================================= */
 function updateUI() {
     document.getElementById("score-display").innerText = score;
     const acc = totalQuestions > 0 ? Math.round((correctAnswers / totalQuestions) * 100) : 100;
     document.getElementById("acc-display").innerText = acc + "%";
     document.getElementById("difficulty-display").innerText = currentDifficulty.toUpperCase();
+
+    // Mostrar perfil y estilo en el HUD (si tienes los elementos en tu HTML)
+    const profileHud = document.getElementById("profile-display");
+    if (profileHud) profileHud.innerText = playerProfile;
+    const styleHud = document.getElementById("style-display");
+    if (styleHud) styleHud.innerText = playerStyle;
 
     const hud = document.getElementById("ml-indicator");
     if (hud) {
@@ -987,11 +1021,7 @@ function processStep() {
 
     const step = storyFlow[currentStep];
 
-    if (step.type === "chapter") {
-        showChapterScreen(step);
-        return;
-    }
-
+    if (step.type === "chapter") { showChapterScreen(step); return; }
     if (step.type === "chapterEnd") {
         if (step.chapter === 1) { reviewMode = "chapter1"; showCaseReview(); return; }
         if (step.chapter === 2) { reviewMode = "chapter2"; showCaseReview(); return; }
@@ -1013,13 +1043,10 @@ function showChapterScreen(step) {
     document.getElementById("dialogue-box").style.display = "none";
     document.getElementById("choice-overlay").style.display = "none";
     document.getElementById("sprite-layer").style.opacity = "0";
-
     const screen = document.getElementById("chapter-screen");
-
     document.getElementById("chapter-label").innerText = `CHAPTER ${step.number}`;
     document.getElementById("chapter-title").innerText = step.title;
     document.getElementById("chapter-subtitle").innerText = step.subtitle || "";
-
     screen.style.display = "flex";
 }
 
@@ -1031,14 +1058,13 @@ function continueChapter() {
 }
 
 /* =========================================================
-   DIALOGUE & SPRITES
+   DIALOGUE
 ========================================================= */
 function showDialogue(step) {
     document.getElementById("choice-overlay").style.display = "none";
     document.getElementById("dialogue-box").style.display = "block";
-    if (step.bg) {
-        document.getElementById("bg-layer").style.backgroundImage = `url('${step.bg}')`;
-    }
+    if (step.bg) document.getElementById("bg-layer").style.backgroundImage = `url('${step.bg}')`;
+    
     const sprite = document.getElementById("character-sprite");
     const spriteLayer = document.getElementById("sprite-layer");
 
@@ -1077,7 +1103,7 @@ function advanceDialogue() {
 }
 
 /* =========================================================
-   QUESTIONS & RANPO HINT
+   QUESTIONS
 ========================================================= */
 function toggleRanpoHint() {
     const hintBox = document.getElementById("hint-box");
@@ -1132,7 +1158,7 @@ function showQuestion(step) {
 }
 
 /* =========================================================
-   ANSWERS
+   ANSWERS CON ML INTEGRADO
 ========================================================= */
 function handleAnswer(choice, step) {
     const buttons = document.querySelectorAll(".choice-btn");
@@ -1150,19 +1176,41 @@ function handleAnswer(choice, step) {
         showToast(choice.feedback, choice.feedbackEs, false);
     }
 
+    // --- INTEGRACIÓN ML ---
     if (step.type !== "caseChoice") {
+        // Punto 3: Ajustar dificultad
         const previousDifficulty = currentDifficulty;
         currentDifficulty = predictNextDifficulty(responseTimeSec, choice.correct);
+        
+        // Punto 1: Actualizar perfil
+        updatePlayerProfile();
+        
+        // Punto 2: Predecir abandono
+        predictAbandonRisk();
+        
+        // Punto 4: Detectar estilo
+        detectPlayerStyle();
+        
+        // Punto 5: Recomendar desafío (forzar dificultad si es necesario)
+        recommendChallenge();
+
         if (currentDifficulty !== previousDifficulty) {
             announceDifficultyChange(currentDifficulty, previousDifficulty);
         }
+        
+        // Si el riesgo de abandono es alto, mostrar mensaje motivacional
+        if (abandonRisk > 0.7 && totalQuestions % 3 === 0) {
+            setTimeout(() => {
+                showToast("Don't give up! Ranpo believes in you.", "¡No te rindas! Ranpo cree en ti.", true);
+            }, 1000);
+        }
     }
+    
     updateUI();
     document.getElementById("choice-overlay").style.display = "none";
     currentStep++;
     setTimeout(processStep, 1800);
 }
-
 /* =========================================================
    FEEDBACK
 ========================================================= */
@@ -1212,26 +1260,16 @@ function showCaseReview() {
     }
 
     const categories = [
-        ["verbToBe", "VERB TO BE"],
-        ["comparatives", "COMPARATIVES"],
-        ["pastSimple", "PAST SIMPLE"],
-        ["pastContinuous", "PAST CONTINUOUS"],
-        ["modals", "MODAL VERBS"],
-        ["poeRanpo", "POE + RANPO"],
-        ["atsushiLucy", "ATSUSHI + LUCY"],
-        ["chapter3Guild", "CH. II — GUILD EVIDENCE"],
-        ["chapter3Connection", "CH. II — CONNECTION"],
-        ["chapter3Trail", "CH. II — THE TRAIL"],
-        ["meursaultVerbToBe", "MEURSAULT LOCK I"],
-        ["meursaultComparatives", "MEURSAULT LOCK II"],
-        ["meursaultPastSimple", "MEURSAULT LOCK III"],
-        ["meursaultPastContinuous", "MEURSAULT LOCK IV"],
-        ["meursaultModals", "MEURSAULT LOCK V"],
-        ["meursaultFinal", "MEURSAULT FINAL VERIFICATION"],
-        ["chapter4Mixed1", "CH. III — TENSE ANALYSIS"],
-        ["chapter4Mixed2", "CH. III — COMPARATIVES"],
-        ["chapter4Mixed3", "CH. III — MODAL DEDUCTION"],
-        ["chapter4Final", "CH. III — FINAL CASE ANALYSIS"]
+        ["verbToBe", "VERB TO BE"], ["comparatives", "COMPARATIVES"],
+        ["pastSimple", "PAST SIMPLE"], ["pastContinuous", "PAST CONTINUOUS"],
+        ["modals", "MODAL VERBS"], ["poeRanpo", "POE + RANPO"],
+        ["atsushiLucy", "ATSUSHI + LUCY"], ["chapter3Guild", "CH. II — GUILD EVIDENCE"],
+        ["chapter3Connection", "CH. II — CONNECTION"], ["chapter3Trail", "CH. II — THE TRAIL"],
+        ["meursaultVerbToBe", "MEURSAULT LOCK I"], ["meursaultComparatives", "MEURSAULT LOCK II"],
+        ["meursaultPastSimple", "MEURSAULT LOCK III"], ["meursaultPastContinuous", "MEURSAULT LOCK IV"],
+        ["meursaultModals", "MEURSAULT LOCK V"], ["meursaultFinal", "MEURSAULT FINAL VERIFICATION"],
+        ["chapter4Mixed1", "CH. III — TENSE ANALYSIS"], ["chapter4Mixed2", "CH. III — COMPARATIVES"],
+        ["chapter4Mixed3", "CH. III — MODAL DEDUCTION"], ["chapter4Final", "CH. III — FINAL CASE ANALYSIS"]
     ];
 
     categories.forEach(([key, label]) => {
@@ -1263,37 +1301,13 @@ function showCaseReview() {
     document.getElementById("review-screen").style.display = "flex";
 }
 
-function continueToChapter2() {
-    document.getElementById("review-screen").style.display = "none";
-    currentStep++;
-    reviewMode = "chapter2";
-    currentChapter = 2;
-    processStep();
-}
-
-function continueToChapter3() {
-    document.getElementById("review-screen").style.display = "none";
-    currentStep++;
-    reviewMode = "chapter3";
-    currentChapter = 3;
-    processStep();
-}
-
-function continueToChapter4() {
-    document.getElementById("review-screen").style.display = "none";
-    currentStep++;
-    reviewMode = "final";
-    currentChapter = 4;
-    processStep();
-}
-
-function continueToFinalEvaluation() {
-    document.getElementById("review-screen").style.display = "none";
-    showFinalScreen();
-}
+function continueToChapter2() { document.getElementById("review-screen").style.display = "none"; currentStep++; reviewMode = "chapter2"; currentChapter = 2; processStep(); }
+function continueToChapter3() { document.getElementById("review-screen").style.display = "none"; currentStep++; reviewMode = "chapter3"; currentChapter = 3; processStep(); }
+function continueToChapter4() { document.getElementById("review-screen").style.display = "none"; currentStep++; reviewMode = "final"; currentChapter = 4; processStep(); }
+function continueToFinalEvaluation() { document.getElementById("review-screen").style.display = "none"; showFinalScreen(); }
 
 /* =========================================================
-   FINAL SCREEN
+   FINAL SCREEN CON ML
 ========================================================= */
 function showFinalScreen() {
     document.getElementById("dialogue-box").style.display = "none";
@@ -1316,6 +1330,19 @@ function showFinalScreen() {
         `FINAL SCORE: ${score} | ACCURACY: ${acc}% (${correctAnswers}/${totalQuestions}) | MEURSAULT: ${meursaultCorrect}/5`;
     document.getElementById("final-difficulty-summary").innerText =
         `Final Adaptive Level Reached: ${currentDifficulty.toUpperCase()} | Final Verification: ${finalVerificationPassed ? "PASSED" : "FAILED"}`;
+
+    // --- MOSTRAR PERFIL Y ESTILO ML EN LA PANTALLA FINAL ---
+    const mlSummary = document.getElementById("ml-summary");
+    if (mlSummary) {
+        mlSummary.innerHTML = `
+            <div style="margin-top: 15px; padding: 10px; background: rgba(0,229,255,0.1); border-left: 3px solid #00e5ff;">
+                <strong>🧠 ML ANALYSIS:</strong><br>
+                Player Profile: <span style="color:#00e5ff;">${playerProfile}</span><br>
+                Detected Style: <span style="color:#00e5ff;">${playerStyle}</span><br>
+                Abandon Risk: <span style="color:${abandonRisk > 0.6 ? '#ff1744' : '#00c853'};">${(abandonRisk * 100).toFixed(0)}%</span>
+            </div>
+        `;
+    }
 
     let description;
     if (rank === "S") {
