@@ -3,9 +3,8 @@
 <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Armed Detective Agency: Visual Novel Investigation (Danganronpa Style)</title>
+    <title>Armed Detective Agency: Visual Novel Investigation</title>
 
-    <script src="https://www.lactame.com/lib/ml/6.0.0/ml.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/ml-knn@2.0.0/dist/ml-knn.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/ml-kmeans@4.0.0/dist/ml-kmeans.min.js"></script>
 
@@ -16,12 +15,9 @@
 
 <div id="vn-container">
 
-    <!-- ===== TITLE SCREEN ===== -->
     <div id="title-screen" class="title-screen">
         <div class="title-characters">
-            <img src="atsushi.png" alt="Atsushi" />
-            <img src="dazai.png" alt="Dazai" />
-            <img src="ranpo.png" alt="Ranpo" />
+            <img src="https://i.pinimg.com/1200x/16/9e/f0/169ef0e10b951eeaf1304d2a602fda06.jpg" />
         </div>
         <h1>Armed Detective Agency</h1>
         <p>A high-stakes mystery investigation visual novel. Analyze case files, question witnesses, and test your English skills under pressure.</p>
@@ -30,10 +26,11 @@
         <button class="title-menu-btn" onclick="openGameMenu()">CASE MENU</button>
     </div>
 
-    <!-- ===== ML HUD (diegético) ===== -->
     <div id="ml-indicator">
         <span class="ml-label">KNN</span>
         DIFFICULTY: <span id="difficulty-display">MEDIUM</span>
+        <span class="hud-item">| PROFILE: <span id="profile-display">Principiante</span></span>
+        <span class="hud-item">| STYLE: <span id="style-display">Equilibrado</span></span>
     </div>
 
     <div id="score-display" style="display:none;">0</div>
@@ -42,16 +39,6 @@
     <div id="feedback-toast"></div>
     <div id="difficulty-flash"></div>
 
-    <div class="hud-item">
-    <span>PROFILE:</span>
-    <span id="profile-display">Principiante</span>
-</div>
-<div class="hud-item">
-    <span>STYLE:</span>
-    <span id="style-display">Equilibrado</span>
-</div>
-
-    <!-- ===== GAME MENU ===== -->
     <div id="game-menu">
         <div class="game-menu-card">
             <h2>CASE MENU</h2>

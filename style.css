@@ -352,7 +352,6 @@ body {
     50% { opacity: 1; transform: translateX(5px); }
 }
 
-/* ===== CHOICE OVERLAY ===== */
 #choice-overlay {
     position: absolute;
     inset: 0;
@@ -474,7 +473,6 @@ body {
     font-family: 'Noto Sans JP', sans-serif;
 }
 
-/* ===== FEEDBACK TOAST ===== */
 #feedback-toast {
     position: absolute;
     top: 80px;
@@ -513,7 +511,6 @@ body {
     75% { transform: translateX(-48%) rotate(-1deg); }
 }
 
-/* ===== TITLE SCREEN ===== */
 .title-screen {
     position: absolute;
     inset: 0;
@@ -1029,4 +1026,3 @@ body {
     .title-characters { height: 120px; }
     #dialogue-text { font-size: 16px; }
     #ml-indicator { bottom: 230px; right: 12px; font-size: 11px; }
-}

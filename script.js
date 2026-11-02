@@ -32,9 +32,6 @@ const ASSETS = {
     francis: "francis.png"
 };
 
-/* =========================================================
-   RANPO HINTS
-========================================================= */
 const ranpoHints = {
     verbToBe: { en: "Ranpo's Deduction: Remember! When using 'neither... nor...', the verb always agrees with the subject closest to it.", es: "Deducción de Ranpo: ¡Recuerda! Con 'neither... nor...', el verbo siempre concuerda con el sujeto más cercano." },
     comparatives: { en: "Ranpo's Deduction: Don't fall for double comparative traps! Never combine 'more' with '-er'.", es: "Deducción de Ranpo: ¡No caigas en trampas de doble comparativo! Nunca combines 'more' con '-er'." },
@@ -58,9 +55,6 @@ const ranpoHints = {
     chapter4Final: { en: "Ranpo's Deduction: Everything matters now. Check subject agreement, tense, comparatives, reported speech, and modal structures.", es: "Deducción de Ranpo: Ahora todo importa. Verifica la concordancia del sujeto, el tiempo verbal, los comparativos, el estilo indirecto y las estructuras modales." }
 };
 
-/* =========================================================
-   QUESTION BANK — CON TRADUCCIÓN EN CADA PREGUNTA Y RESPUESTA
-========================================================= */
 const questionBank = {
     verbToBe: {
         easy: {
@@ -1102,9 +1096,6 @@ function advanceDialogue() {
     }
 }
 
-/* =========================================================
-   QUESTIONS
-========================================================= */
 function toggleRanpoHint() {
     const hintBox = document.getElementById("hint-box");
     hintBox.style.display = (hintBox.style.display === "block") ? "none" : "block";
@@ -1157,9 +1148,6 @@ function showQuestion(step) {
     questionStartTime = Date.now();
 }
 
-/* =========================================================
-   ANSWERS CON ML INTEGRADO
-========================================================= */
 function handleAnswer(choice, step) {
     const buttons = document.querySelectorAll(".choice-btn");
     buttons.forEach(btn => { btn.disabled = true; });
@@ -1176,29 +1164,23 @@ function handleAnswer(choice, step) {
         showToast(choice.feedback, choice.feedbackEs, false);
     }
 
-    // --- INTEGRACIÓN ML ---
     if (step.type !== "caseChoice") {
         // Punto 3: Ajustar dificultad
         const previousDifficulty = currentDifficulty;
         currentDifficulty = predictNextDifficulty(responseTimeSec, choice.correct);
         
-        // Punto 1: Actualizar perfil
         updatePlayerProfile();
         
-        // Punto 2: Predecir abandono
         predictAbandonRisk();
         
-        // Punto 4: Detectar estilo
         detectPlayerStyle();
         
-        // Punto 5: Recomendar desafío (forzar dificultad si es necesario)
         recommendChallenge();
 
         if (currentDifficulty !== previousDifficulty) {
             announceDifficultyChange(currentDifficulty, previousDifficulty);
         }
         
-        // Si el riesgo de abandono es alto, mostrar mensaje motivacional
         if (abandonRisk > 0.7 && totalQuestions % 3 === 0) {
             setTimeout(() => {
                 showToast("Don't give up! Ranpo believes in you.", "¡No te rindas! Ranpo cree en ti.", true);
@@ -1211,9 +1193,7 @@ function handleAnswer(choice, step) {
     currentStep++;
     setTimeout(processStep, 1800);
 }
-/* =========================================================
-   FEEDBACK
-========================================================= */
+
 function showToast(msgEn, msgEs, isCorrect) {
     const toast = document.getElementById("feedback-toast");
     toast.innerHTML = `<div style="font-size:16px;">${msgEn}</div>${msgEs ? `<div style="font-size:13px; color:#fff; opacity:0.9; margin-top:4px;">🇪🇸 ${msgEs}</div>` : ''}`;
@@ -1222,9 +1202,6 @@ function showToast(msgEn, msgEs, isCorrect) {
     setTimeout(() => { toast.style.display = "none"; }, 2800);
 }
 
-/* =========================================================
-   CASE REVIEW
-========================================================= */
 function showCaseReview() {
     document.getElementById("dialogue-box").style.display = "none";
     document.getElementById("choice-overlay").style.display = "none";
@@ -1306,9 +1283,6 @@ function continueToChapter3() { document.getElementById("review-screen").style.d
 function continueToChapter4() { document.getElementById("review-screen").style.display = "none"; currentStep++; reviewMode = "final"; currentChapter = 4; processStep(); }
 function continueToFinalEvaluation() { document.getElementById("review-screen").style.display = "none"; showFinalScreen(); }
 
-/* =========================================================
-   FINAL SCREEN CON ML
-========================================================= */
 function showFinalScreen() {
     document.getElementById("dialogue-box").style.display = "none";
     document.getElementById("choice-overlay").style.display = "none";
@@ -1359,9 +1333,6 @@ function showFinalScreen() {
     finalScreen.style.display = "flex";
 }
 
-/* =========================================================
-   RESTART & KEYBOARD
-========================================================= */
 function restartGame() {
     document.getElementById("end-screen").style.display = "none";
     document.getElementById("review-screen").style.display = "none";
@@ -1386,9 +1357,6 @@ document.addEventListener("keydown", (e) => {
     }
 });
 
-/* =========================================================
-   PRELOAD
-========================================================= */
 function preloadImages() {
     Object.entries(ASSETS).forEach(([name, url]) => {
         const img = new Image();
